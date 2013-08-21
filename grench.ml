@@ -19,7 +19,7 @@ let message_for cwd args =
 let handler resp =
   match List.Assoc.find resp "out" with
     | None -> printf "No response.\n"
-    | Some out -> printf "%s\n" out
+    | Some Bencode.String(out) -> printf "%s\n" out
 
 let main cwd args =
   Nrepl.with_connection "127.0.0.1" 50454
