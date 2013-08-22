@@ -1,29 +1,30 @@
 open Async.Std
 open Core.Std
 open Printf
-open Nrepl
-open Bencode
 
 let args_vector args =
   String.concat ~sep:"\" \"" (List.map args String.escaped)
 
-(* sprintf "(binding [*cwd* %s, *exit-process?* false] (-main \"%s\"))" *)
-(*     cwd (args_vector args) *)
-
 let message_for cwd args =
-  [("op", Bencode.String("eval"));
-   ("id", Bencode.String("123"));
-   ("ns", Bencode.String("user"));
-   ("code", Bencode.String("(def grench :men)"))]
+  let main_form = sprintf "(binding [*cwd* %s, *exit-process?* false]
+                             (-main \"%s\"))" in
+  match Uuid.sexp_of_t (Uuid.create ()) with
+      Sexp.Atom uuid -> [("op", Bencode.String("eval"));
+                         ("id", Bencode.String(uuid));
+                         ("ns", Bencode.String("user"));
+                         ("code", Bencode.String(main_form cwd
+                                                   (args_vector args)))]
+    | Sexp.List _ -> [] (* no. *)
 
 let handler resp =
   match List.Assoc.find resp "out" with
     | None -> printf "No response.\n"
     | Some Bencode.String(out) -> printf "%s\n" out
+    | Some _ -> printf "Unknown response"
 
 let main cwd args =
   Nrepl.with_connection "127.0.0.1" 50454
-    (message_for cwd args) handler; ()
+    (message_for cwd args) handler
 
 let rec find_root cwd original =
   match Sys.file_exists (String.concat ~sep:Filename.dir_sep
