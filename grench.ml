@@ -5,9 +5,15 @@ open Printf
 let args_vector args =
   String.concat ~sep:"\" \"" (List.map args String.escaped)
 
+let main_form = sprintf "(binding [leiningen.core.main/*cwd* \"%s\"
+                                   leiningen.core.main/*exit-process?* false]
+                           (try (leiningen.core.main/-main \"%s\")
+                             (catch clojure.lang.ExceptionInfo e
+                               (when-not (and (number? (:exit-code e))
+                                              (zero? (:exit-code e)))
+                                 (throw e)))))"
+
 let message_for cwd args =
-  let main_form = sprintf "(binding [*cwd* %s, *exit-process?* false]
-                             (-main \"%s\"))" in
   match Uuid.sexp_of_t (Uuid.create ()) with
       Sexp.Atom uuid -> [("op", Bencode.String("eval"));
                          ("id", Bencode.String(uuid));
@@ -16,14 +22,16 @@ let message_for cwd args =
                                                    (args_vector args)))]
     | Sexp.List _ -> [] (* no. *)
 
+let println = printf "%s\n%!"
+
 let handler resp =
   match List.Assoc.find resp "out" with
-    | None -> printf "No response.\n"
-    | Some Bencode.String(out) -> printf "%s\n" out
-    | Some _ -> printf "Unknown response"
+    | None -> println "no output"
+    | Some Bencode.String(out) -> println out
+    | Some _ -> ()
 
 let main cwd args =
-  Nrepl.with_connection "127.0.0.1" 50454
+  Nrepl.send_and_receive "127.0.0.1" 50454
     (message_for cwd args) handler
 
 let rec find_root cwd original =
