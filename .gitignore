@@ -1,2 +1,5 @@
 _build
 *.byte
+/.lein-repl-history
+/.nrepl-port
+/target
