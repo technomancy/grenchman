@@ -9,9 +9,9 @@ let main_form = sprintf "(binding [leiningen.core.main/*cwd* \"%s\"
                                    leiningen.core.main/*exit-process?* false]
                            (try (leiningen.core.main/-main \"%s\")
                              (catch clojure.lang.ExceptionInfo e
-                               (when-not (and (number? (:exit-code e))
-                                              (zero? (:exit-code e)))
-                                 (throw e)))))"
+                               (let [c (:exit-code (ex-data e))]
+                                 (when-not (and (number? c) (zero? c))
+                                   (throw e))))))"
 
 let message_for cwd args =
   match Uuid.sexp_of_t (Uuid.create ()) with
@@ -24,11 +24,15 @@ let message_for cwd args =
 
 let println = printf "%s\n%!"
 
-let handler resp =
+let handler raw resp =
+  (* TODO: got to be a better way to do this over alists *)
   match List.Assoc.find resp "out" with
-    | None -> println "no output"
     | Some Bencode.String(out) -> println out
-    | Some _ -> ()
+    | Some _ | None -> match List.Assoc.find resp "value" with
+        | Some Bencode.String(value) -> println value
+        | Some _ | None -> match List.Assoc.find resp "status" with
+            | Some Bencode.String(status) -> printf "Status: %s\n%!" status
+            | Some _ | None -> printf "unknown response: %s\n%!" raw
 
 let main cwd args =
   Nrepl.send_and_receive "127.0.0.1" 50454
