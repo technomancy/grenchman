@@ -27,26 +27,26 @@ let message_for root cwd args =
                                                    (splice_args args)))]
     | Sexp.List _ -> [] (* no. *)
 
-let rec print_status = function
+let rec handle_status = function
+  | Bencode.String("done") :: tl -> exit 0; ()
+  | Bencode.String("eval-error") :: tl -> exit 0; ()
   | Bencode.String(status) :: tl -> printf "Status: %s\n%!" status;
-    print_status tl
+    handle_status tl
   | x :: tl -> printf "  Unknown status: %s\n%!" (Bencode.marshal x)
   | [] -> ()
 
-let handler raw resp =
-  (* TODO: got to be a better way to do this over alists *)
-  match List.Assoc.find resp "out" with
-    | Some Bencode.String(out) -> printf "%s%!" out
-    | Some _ | None -> match List.Assoc.find resp "err" with
-        | Some Bencode.String(out) -> eprintf "%s%!" out
-        | Some _ | None -> match List.Assoc.find resp "value" with
-            | Some Bencode.String(value) -> ()
-            | Some _ | None -> match List.Assoc.find resp "status" with
-                (* TODO: Async exit isn't unit; huh? *)
-                | Some Bencode.List([Bencode.String("done")]) -> exit 0; ()
-                | Some Bencode.List([Bencode.String("eval-error")]) -> exit 1; ()
-                | Some Bencode.List(status) -> print_status status
-                | Some _ | None -> printf "unknown response: %s\n%!" raw
+let rec handler raw resp =
+  let handle k v = match (k, v) with
+    | ("out", out) -> printf "%s%!" out
+    | ("err", out) -> eprintf "%s%!" out
+    | ("value", _) | ("session", _) | ("id", _) | ("ns", _) -> ()
+    | (k, v) -> printf "  Unknown response: %s %s\n%!" k v in
+  match resp with
+    | (k, Bencode.String v) :: tl -> handle k v; handler raw tl
+    | ("status", Bencode.List s) :: tl -> handle_status s; handler raw tl
+    | (_, _) :: tl -> printf "  Unknown response: %s\n%!" raw; handler raw tl
+    | [] -> ()
+
 
 let main cwd root args =
   match Sys.getenv "LEIN_REPL_PORT" with
