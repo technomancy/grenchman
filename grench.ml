@@ -2,11 +2,16 @@ open Async.Std
 open Core.Std
 open Printf
 
-let args_vector args =
+let splice_args args =
   String.concat ~sep:"\" \"" (List.map args String.escaped)
 
 let main_form = sprintf "(binding [leiningen.core.main/*cwd* \"%s\"
                                    leiningen.core.main/*exit-process?* false]
+                           (System/setProperty \"leiningen.original.pwd\" \"%s\")
+
+                           (defmethod leiningen.core.eval/eval-in :trampoline
+                           [& _] (throw (Exception. \"trampoline disabled\")))
+
                            (try (leiningen.core.main/-main \"%s\")
                              (catch clojure.lang.ExceptionInfo e
                                (let [c (:exit-code (ex-data e))]
@@ -19,13 +24,13 @@ let message_for root cwd args =
                          ("id", Bencode.String(uuid));
                          ("ns", Bencode.String("user"));
                          ("code", Bencode.String(main_form root cwd
-                                                   (args_vector args)))]
+                                                   (splice_args args)))]
     | Sexp.List _ -> [] (* no. *)
 
 let rec print_status = function
   | Bencode.String(status) :: tl -> printf "Status: %s\n%!" status;
     print_status tl
-  | x :: tl -> printf "unknown status: %s" (Bencode.marshal x)
+  | x :: tl -> printf "  Unknown status: %s\n%!" (Bencode.marshal x)
   | [] -> ()
 
 let handler raw resp =
