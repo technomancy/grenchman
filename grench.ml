@@ -49,7 +49,11 @@ let rec handler raw resp =
     | (_, _) :: tl -> printf "  Unknown response: %s\n%!" raw; handler raw tl
     | [] -> ()
 
-let port_err = "Couldn't read port from ~/.lein/repl-port or LEIN_REPL_PORT."
+let port_err () =
+  eprintf "Couldn't read port from ~/.lein/repl-port or LEIN_REPL_PORT.\n
+If Leiningen is not running, launch `lein repl :headless' from outside a
+project directory and try again.\n";
+  exit 1; "-1"
 
 let repl_port root =
   match Sys.getenv "LEIN_REPL_PORT" with
@@ -59,7 +63,7 @@ let repl_port root =
                                        ".lein"; "repl-port"] in
               match Sys.file_exists filename with
                 | `Yes -> In_channel.read_all filename
-                | `No | `Unknown -> Printf.printf "%s\n%!" port_err; exit 1; ""
+                | `No | `Unknown -> port_err ()
 
 let main cwd root args =
   let port = Int.of_string (repl_port root) in
