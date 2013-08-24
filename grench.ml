@@ -39,7 +39,9 @@ let rec handler raw resp =
   let handle k v = match (k, v) with
     | ("out", out) -> printf "%s%!" out
     | ("err", out) -> eprintf "%s%!" out
-    | ("value", _) | ("session", _) | ("id", _) | ("ns", _) -> ()
+    | ("ex", out) | ("root-ex", out) -> eprintf "%s\n%!" out
+    | ("value", value) -> (* printf "%s\n%!" value *) ()
+    | ("session", _) | ("id", _) | ("ns", _) -> ()
     | (k, v) -> printf "  Unknown response: %s %s\n%!" k v in
   match resp with
     | (k, Bencode.String v) :: tl -> handle k v; handler raw tl
@@ -47,12 +49,22 @@ let rec handler raw resp =
     | (_, _) :: tl -> printf "  Unknown response: %s\n%!" raw; handler raw tl
     | [] -> ()
 
+let port_err = "Couldn't read port from ~/.lein/repl-port or LEIN_REPL_PORT."
+
+let repl_port root =
+  match Sys.getenv "LEIN_REPL_PORT" with
+    | Some port -> port
+    | None -> let filename = String.concat
+                ~sep:Filename.dir_sep [(Sys.getenv_exn "HOME");
+                                       ".lein"; "repl-port"] in
+              match Sys.file_exists filename with
+                | `Yes -> In_channel.read_all filename
+                | `No | `Unknown -> Printf.printf "%s\n%!" port_err; exit 1; ""
 
 let main cwd root args =
-  match Sys.getenv "LEIN_REPL_PORT" with
-    | Some port -> Nrepl.send_and_receive "127.0.0.1" (Int.of_string port)
-      (message_for cwd root args) handler
-    | None -> Printf.printf "%s\n%!" "Must set LEIN_REPL_PORT."; exit 1; ()
+  let port = Int.of_string (repl_port root) in
+  let message = message_for cwd root args in
+  Nrepl.send_and_receive "127.0.0.1" port message handler
 
 let rec find_root cwd original =
   match Sys.file_exists (String.concat ~sep:Filename.dir_sep
