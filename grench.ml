@@ -63,16 +63,15 @@ let rec find_root cwd original =
       else
         find_root (Filename.dirname cwd) original
 
-(* TODO: this gets in the way of a bunch of useful lein flags *)
-let command =
-  Command.basic
-    ~summary:"Send commands to a running Leiningen instance"
-    Command.Spec.(
-      empty
-      +> anon (sequence ("args" %: string)))
-    (fun args () -> main (find_root (Sys.getcwd ()) (Sys.getcwd ()))
-      (Sys.getcwd ()) args)
+let usage = "usage: grench TASK [ARGS]...
+
+A replacement launcher for running Leiningen tasks.
+See `grench help' to list tasks."
 
 let () =
-  Command.run ~version:"0.0.1" command;
+  let cwd = Sys.getcwd () in
+  let root = find_root cwd cwd in
+  match Sys.argv |> Array.to_list |> List.tl with
+    | None | Some ["--grench-help"] -> printf "%s\n%!" usage
+    | Some args -> main root cwd args;
   never_returns (Scheduler.go ())
