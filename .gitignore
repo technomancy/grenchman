@@ -3,3 +3,5 @@ _build
 /.lein-repl-history
 /.nrepl-port
 /target
+/grench.native
+/.lein-env
