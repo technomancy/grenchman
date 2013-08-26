@@ -7,8 +7,22 @@ Fast invocation of Leiningen tasks over nREPL.
 
 ## Install
 
-To build, install [opam](http://opam.ocamlpro.com/) and OCaml 4.01 and run:
+You would need to install [opam](http://opam.ocamlpro.com/) and OCaml 4.x to be
+able to build Grenchman.
 
+If you're not sure whether you have 4.x installed or not, you can ensure
+yourself as follows:
+
+    $ opam switch list
+    # If your system compiler is 4.x or above, you're ready to go.
+    # Otherwise, issue the following command:
+    $ opam switch 4.00.1
+
+To build, run the following commands:
+
+    $ git clone git@github.com:technomancy/grenchman.git grenchman
+    $ cd grenchman
+    $ opam install core async
     $ ocamlbuild -use-ocamlfind grench.native
     $ ln -s $PWD/grench.native ~/bin/grench # or somewhere on your $PATH
 
