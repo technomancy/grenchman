@@ -24,21 +24,18 @@ let main_form = sprintf "(binding [*cwd* \"%s\", *exit-process?* false]
                                    (throw e))))))"
 
 let eval_message root cwd args session =
-  match Uuid.sexp_of_t (Uuid.create ()) with
-      Sexp.Atom uuid -> [("session", session);
-                         ("op", "eval");
-                         ("id", "eval-" ^ uuid);
-                         ("ns", "leiningen.core.main");
-                         ("code", main_form root cwd (splice_args args))]
-    | Sexp.List _ -> [] (* no. *)
+  [("session", session);
+   ("op", "eval");
+   ("id", "eval-" ^ (Uuid.to_string (Uuid.create ())));
+   ("ns", "leiningen.core.main");
+   ("code", main_form root cwd (splice_args args))]
 
 let stdin_message input session =
-  match Uuid.sexp_of_t (Uuid.create ()) with
-      Sexp.Atom uuid -> [("op", "stdin");
-                         ("id", uuid);
-                         ("stdin", input ^ "\n");
-                         ("session", session)]
-    | Sexp.List _ -> [] (* no. *)
+  let uuid = Uuid.to_string (Uuid.create ()) in
+  [("op", "stdin");
+   ("id", uuid);
+   ("stdin", input ^ "\n");
+   ("session", session)]
 
 let send_input resp (r,w) result =
   match List.Assoc.find resp "session" with
