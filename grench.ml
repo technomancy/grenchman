@@ -34,6 +34,23 @@ let eval_message root cwd args session =
                                                    (splice_args args)))]
     | Sexp.List _ -> [] (* no. *)
 
+let stdin_message input session =
+  match Uuid.sexp_of_t (Uuid.create ()) with
+      Sexp.Atom uuid -> [("op", Bencode.String("stdin"));
+                         ("id", Bencode.String(uuid));
+                         ("stdin", Bencode.String(input ^ "\n"));
+                         ("session", Bencode.String(session))]
+    | Sexp.List _ -> [] (* no. *)
+
+let send_input resp (r,w) result =
+  match List.Assoc.find resp "session" with
+    | Some Bencode.String(session) -> let input = match result with
+        | `Ok input -> input
+        | `Eof -> "" in
+                      let message = stdin_message input session in
+                      Nrepl.send w message
+    | None | Some _ -> eprintf "  No session in need-input."
+
 let rec handler rw raw resp =
   let handle k v = match (k, v) with
     | ("out", out) -> printf "%s%!" out
@@ -56,6 +73,9 @@ let rec handler rw raw resp =
       | Bencode.String("done") :: tl -> handle_done resp
       | Bencode.String("eval-error") :: tl -> exit 1
       | Bencode.String("unknown-session") :: tl -> eprintf "Unknown session.\n"; exit 1
+      | Bencode.String("need-input") :: tl -> let stdin = Async_unix.Fd.stdin () in
+                              let rdr = Reader.create stdin in
+                              Reader.read_line rdr >>| send_input resp rw; ()
       | x -> printf "  Unknown status: %s\n%!" (Bencode.marshal (Bencode.List(x))) in
 
   (* currently if it's a status message we ignore every other field *)
