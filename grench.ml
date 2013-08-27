@@ -24,22 +24,20 @@ let main_form = sprintf "(binding [*cwd* \"%s\", *exit-process?* false]
                                    (throw e))))))"
 
 let eval_message root cwd args session =
-  (* TODO: move id generation to Nrepl.send *)
   match Uuid.sexp_of_t (Uuid.create ()) with
-      Sexp.Atom uuid -> [("session", Bencode.String(session));
-                         ("op", Bencode.String("eval"));
-                         ("id", Bencode.String("eval-" ^ uuid));
-                         ("ns", Bencode.String("leiningen.core.main"));
-                         ("code", Bencode.String(main_form root cwd
-                                                   (splice_args args)))]
+      Sexp.Atom uuid -> [("session", session);
+                         ("op", "eval");
+                         ("id", "eval-" ^ uuid);
+                         ("ns", "leiningen.core.main");
+                         ("code", main_form root cwd (splice_args args))]
     | Sexp.List _ -> [] (* no. *)
 
 let stdin_message input session =
   match Uuid.sexp_of_t (Uuid.create ()) with
-      Sexp.Atom uuid -> [("op", Bencode.String("stdin"));
-                         ("id", Bencode.String(uuid));
-                         ("stdin", Bencode.String(input ^ "\n"));
-                         ("session", Bencode.String(session))]
+      Sexp.Atom uuid -> [("op", "stdin");
+                         ("id", uuid);
+                         ("stdin", input ^ "\n");
+                         ("session", session)]
     | Sexp.List _ -> [] (* no. *)
 
 let send_input resp (r,w) result =

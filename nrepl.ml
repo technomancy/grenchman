@@ -8,8 +8,14 @@ let debug out =
     | Some _ -> Printf.printf "%s\n%!" out
     | None -> ()
 
+let rec convert_message message converted =
+  match message with
+    | (k, v) :: tl -> convert_message tl ((k, Bencode.String(v)) :: converted)
+    | [] -> converted
+
 let send w message =
-  let out = Bencode.marshal (Bencode.Dict message) in
+  let converted = Bencode.Dict(convert_message message []) in
+  let out = Bencode.marshal converted in
   debug ("-> " ^ out);
   Writer.write w out
 
@@ -69,5 +75,5 @@ let new_session host port message handler =
   let buffer = (String.create buffer_size) in
   Tcp.connect (Tcp.to_host_and_port host port)
   >>= (fun (_, r, w) ->
-    send w [("op", Bencode.String("clone"))];
+    send w [("op", "clone")];
     Reader.read r buffer >>= initiate (r, w) buffer handler message)
