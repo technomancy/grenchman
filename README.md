@@ -22,23 +22,48 @@ To build, run the following commands:
 
     $ git clone git@github.com:technomancy/grenchman.git grenchman
     $ cd grenchman
-    $ opam install core async
+    $ opam install core async ocamlfind
     $ ocamlbuild -use-ocamlfind grench.native
     $ ln -s $PWD/grench.native ~/bin/grench # or somewhere on your $PATH
 
 ## Usage
 
 You can use `grench` as a replacement launcher for `lein` for most
-non-interactive tasks. When used together with `:eval-in :nrepl`, you
-can eval Clojure code inside your project in under 0.15 seconds.
+tasks, though the `repl` task is not yet supported.
 
-Currently requires Leiningen from git master (newer than 2.3.2). It's
+Currently it requires Leiningen from git master (newer than 2.3.2). It's
 up to you to launch your own Leiningen process separately:
 
     $ cd ~/.lein && lein repl :headless
 
+You may find this snippet useful to put in your user profile:
+
+```clj
+:aliases {"eval" ["run" "-m" "clojure.main/main" "-e"]}
+```
+
+This lets you eval one expression at a time.
+
 Tasks for all projects will share the same Leiningen instance, so
-projects with have conflicting plugins may behave unpredictably.
+projects with have conflicting plugins or hooks may behave unpredictably.
+
+## Faster
+
+Using Grenchman means you never have to wait for Leiningen's JVM to
+start, but project JVMs are still launched like normal by default for
+most task invocations. In order to avoid that, you can run `lein repl`
+(with or without `:headless`) inside the project directory and
+`grench` will automatically route `eval-in-project` calls to that
+running repl instance.
+
+Then you can run things like:
+
+    $ time grench eval '(:status (my.web/app {:uri "/"}))'
+    200
+
+    real    0m0.651s
+    user    0m0.024s
+    sys     0m0.024s
 
 ## License
 
