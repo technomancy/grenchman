@@ -5,14 +5,17 @@ open Printf
 let splice_args args =
   String.concat ~sep:"\" \"" (List.map args String.escaped)
 
-let main_form = sprintf "(binding [leiningen.core.main/*cwd* \"%s\"
-                                   leiningen.core.main/*exit-process?* false]
+let main_form = sprintf "(binding [*cwd* \"%s\", *exit-process?* false]
                            (System/setProperty \"leiningen.original.pwd\" \"%s\")
 
+                           (defmethod leiningen.core.eval/eval-in :default
+                             [project form]
+                             (leiningen.core.eval/eval-in
+                               (assoc project :eval-in :nrepl) form))
                            (defmethod leiningen.core.eval/eval-in :trampoline
-                           [& _] (throw (Exception. \"trampoline disabled\")))
+                             [& _] (throw (Exception. \"trampoline disabled\")))
 
-                           (try (leiningen.core.main/-main \"%s\")
+                           (try (-main \"%s\")
                              (catch clojure.lang.ExceptionInfo e
                                (let [c (:exit-code (ex-data e))]
                                  (when-not (and (number? c) (zero? c))
@@ -22,7 +25,7 @@ let message_for root cwd args =
   match Uuid.sexp_of_t (Uuid.create ()) with
       Sexp.Atom uuid -> [("op", Bencode.String("eval"));
                          ("id", Bencode.String(uuid));
-                         ("ns", Bencode.String("user"));
+                         ("ns", Bencode.String("leiningen.core.main"));
                          ("code", Bencode.String(main_form root cwd
                                                    (splice_args args)))]
     | Sexp.List _ -> [] (* no. *)
