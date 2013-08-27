@@ -67,3 +67,29 @@ let rec handler (r,w,p) raw resp =
         | (k, Bencode.String(v)) :: tl -> handle k v; handler (r,w,p) raw tl
         | _ :: tl -> printf "  Unknown response: %s\n%!" raw; handler (r,w,p) raw tl
         | [] -> ()
+
+let port_err () =
+  eprintf "Couldn't read port from .nrepl-port or LEIN_REPL_PORT.\n
+If Leiningen is not running, launch `lein trampoline repl :headless' from
+outside a project directory and try again.\n";
+  Pervasives.exit 1
+
+let repl_port root =
+  match Sys.getenv "LEIN_REPL_PORT" with
+    | Some port -> port
+    | None -> let filename = String.concat
+                ~sep:Filename.dir_sep [root; ".nrepl-port"] in
+              match Sys.file_exists filename with
+                | `Yes -> In_channel.read_all filename
+                | `No | `Unknown -> port_err ()
+
+let initiate port result =
+  match result with
+    | `Ok input -> Nrepl.new_session "127.0.0.1" port
+      (eval_message input) handler
+    | `Eof -> exit 0
+
+let main root =
+  let port = Int.of_string (repl_port root) in
+  printf "> %!";
+  Reader.read_line rdr >>| initiate port
