@@ -37,16 +37,16 @@ let stdin_message input session =
    ("stdin", input ^ "\n");
    ("session", session)]
 
-let send_input resp (r,w) result =
+let send_input resp (r,w,p) result =
   match List.Assoc.find resp "session" with
     | Some Bencode.String(session) -> let input = match result with
         | `Ok input -> input
         | `Eof -> "" in
                       let message = stdin_message input session in
-                      Nrepl.send w message
+                      Nrepl.send w p message
     | None | Some _ -> eprintf "  No session in need-input."
 
-let rec handler rw raw resp =
+let rec handler (r,w,p) raw resp =
   let handle k v = match (k, v) with
     | ("out", out) -> printf "%s%!" out
     | ("err", out) -> eprintf "%s%!" out
@@ -55,22 +55,26 @@ let rec handler rw raw resp =
     | ("session", _) | ("id", _) | ("ns", _) -> ()
     | (k, v) -> printf "  Unknown response: %s %s\n%!" k v in
 
-  let handle_done resp =
-    match List.Assoc.find resp "id" with
-      (* TODO: terrible heuristic; need to track ids properly *)
-      | Some Bencode.String(id) -> if String.sub id 0 5 = "eval-" then
-          exit 0 else ()
-      | None | Some _ -> () in
+  let remove_pending pending id =
+    Nrepl.debug ("-p " ^ String.concat ~sep:" " (! pending));
+    match id with
+      | Some Bencode.String(id) -> if List.mem (! pending) id then
+          pending := List.filter (! pending) ((<>) id)
+      | None | Some _ -> eprintf "  Unknown message id.\n%!" in
+
+  let handle_done resp pending =
+    remove_pending pending (List.Assoc.find resp "id");
+    if ! pending = ["init"] then exit 0 in
 
   let rec handle_status resp status =
     match status with
       (* TODO: handle messages with multiple status fields by recuring on tl *)
-      | Bencode.String("done") :: tl -> handle_done resp
+      | Bencode.String("done") :: tl -> handle_done resp p
       | Bencode.String("eval-error") :: tl -> exit 1
       | Bencode.String("unknown-session") :: tl -> eprintf "Unknown session.\n"; exit 1
       | Bencode.String("need-input") :: tl -> let stdin = Async_unix.Fd.stdin () in
                               let rdr = Reader.create stdin in
-                              Reader.read_line rdr >>| send_input resp rw; ()
+                              Reader.read_line rdr >>| send_input resp (r,w,p); ()
       | x -> printf "  Unknown status: %s\n%!" (Bencode.marshal (Bencode.List(x))) in
 
   (* currently if it's a status message we ignore every other field *)
@@ -78,8 +82,8 @@ let rec handler rw raw resp =
     | Some Bencode.List(status) -> handle_status resp status
     | Some _ -> eprintf "  Unexpected status type: %s\n%!" raw
     | None -> match resp with
-        | (k, Bencode.String(v)) :: tl -> handle k v; handler rw raw tl
-        | _ :: tl -> printf "  Unknown response: %s\n%!" raw; handler rw raw tl
+        | (k, Bencode.String(v)) :: tl -> handle k v; handler (r,w,p) raw tl
+        | _ :: tl -> printf "  Unknown response: %s\n%!" raw; handler (r,w,p) raw tl
         | [] -> ()
 
 let port_err () =
@@ -123,5 +127,5 @@ let () =
     let root = find_root cwd cwd in
     match Sys.argv |> Array.to_list |> List.tl with
       | None | Some ["--grench-help"] -> printf "%s\n%!" usage
-      | Some args -> main root cwd args;
-        never_returns (Scheduler.go ())
+      | Some args -> let _ = main root cwd args in
+                     never_returns (Scheduler.go ())
