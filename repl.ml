@@ -22,11 +22,10 @@ let stdin_message input session =
 
 let send_input resp (r,w,p) result =
   match List.Assoc.find resp "session" with
-    | Some Bencode.String(session) -> let input = match result with
-        | `Ok input -> input
-        | `Eof -> "" in
-                      let message = stdin_message input session in
-                      Nrepl.send w p message
+    | Some Bencode.String(session) -> (match result with
+        | `Ok input -> Nrepl.send w p (stdin_message input session)
+        (* TODO: only exit on EOF in a top-level input request *)
+        | `Eof -> exit 0)
     | None | Some _ -> eprintf "  No session in need-input."
 
 let rec handler (r,w,p) raw resp =
