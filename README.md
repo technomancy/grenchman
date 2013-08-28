@@ -7,7 +7,7 @@ Fast invocation of Leiningen tasks over nREPL.
 
 ## Install
 
-You would need to install [opam](http://opam.ocamlpro.com/) and OCaml 4.x to be
+You will need to install [opam](http://opam.ocamlpro.com/) and OCaml 4.x to be
 able to build Grenchman.
 
 If you're not sure whether you have 4.x installed or not, you can ensure
@@ -28,24 +28,20 @@ To build, run the following commands:
 
 ## Usage
 
-You can use `grench` as a replacement launcher for `lein` for most
-tasks, though the `repl` task is not yet supported.
+You can use `grench` as a replacement for the `lein` script for most
+tasks, with some gotchas listed below.
 
 Currently it requires Leiningen from git master (newer than 2.3.2). It's
 up to you to launch your own Leiningen process separately:
 
     $ cd ~/.lein && lein repl :headless
 
-You may find this snippet useful to put in your user profile:
+You may find this snippet useful to put in your user profile to
+quickly eval one expression at a time:
 
 ```clj
 :aliases {"eval" ["run" "-m" "clojure.main/main" "-e"]}
 ```
-
-This lets you eval one expression at a time.
-
-Tasks for all projects will share the same Leiningen instance, so
-projects with have conflicting plugins or hooks may behave unpredictably.
 
 ## Faster
 
@@ -64,6 +60,18 @@ Then you can run things like:
     real    0m0.651s
     user    0m0.024s
     sys     0m0.024s
+
+## Gotchas
+
+The `repl` task is currently replaced with a dumbed-down raw
+`clojure.main` repl which lacks all the pleasantries of modern
+civilization like input history and readline bindings. Wrapping with
+`rlwrap` is recommended. It is also affected by a bug in Leiningen
+which prevents it from working inside a project directory unless the
+in-project repl server technique above is used.
+
+Tasks for all projects will share the same Leiningen instance, so
+projects with have conflicting plugins or hooks may behave unpredictably.
 
 ## License
 
