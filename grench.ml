@@ -69,7 +69,8 @@ let () =
     let root = find_root cwd cwd in
     match Sys.argv |> Array.to_list |> List.tl with
       | None | Some ["--grench-help"] -> printf "%s\n%!" usage
-      | Some ["repl"] -> let _ = Repl.main root in
+      | Some ["repl"] -> let _ = main root cwd
+                           ["run"; "-m"; "clojure.main/main"; "-r"] in
                          never_returns (Scheduler.go ())
       | Some args -> let _ = main root cwd args in
                      never_returns (Scheduler.go ())
