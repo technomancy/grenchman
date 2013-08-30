@@ -47,7 +47,8 @@ let repl_port () =
 let main cwd root args =
   let port = Int.of_string (repl_port ()) in
   let message = main_message cwd root args in
-  Nrepl.new_session "127.0.0.1" port message Repl.handler
+  Nrepl.new_session "127.0.0.1" port message Repl.handler;
+  never_returns (Scheduler.go ())
 
 let rec find_root cwd original =
   match Sys.file_exists (String.concat ~sep:Filename.dir_sep
@@ -69,8 +70,9 @@ let () =
     let root = find_root cwd cwd in
     match Sys.argv |> Array.to_list |> List.tl with
       | None | Some ["--grench-help"] -> printf "%s\n%!" usage
-      | Some ["repl"] -> let _ = main root cwd
-                           ["run"; "-m"; "clojure.main/main"; "-r"] in
-                         never_returns (Scheduler.go ())
-      | Some args -> let _ = main root cwd args in
-                     never_returns (Scheduler.go ())
+      | Some ["--leiningen-version"] | Some ["--lein-version"] ->
+        main root cwd ["version"]
+      | Some ["--version"] | Some ["version"] | Some ["-v"] ->
+        printf "Grenchman 0.1.0\n%!"
+      | Some ["repl"] -> main root cwd ["run"; "-m"; "clojure.main/main"; "-r"]
+      | Some args -> main root cwd args

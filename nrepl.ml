@@ -22,6 +22,7 @@ let send w pending message =
     | Some id -> pending := id :: (! pending)
     | None -> Printf.eprintf "  Sending message without id!\n%!"
 
+(* TODO: there's still a bug here; see `grench help copying` *)
 let get_leftover buffer parsed bytes_read =
   match parsed with
     | Some parsed ->
@@ -31,6 +32,7 @@ let get_leftover buffer parsed bytes_read =
     | None -> String.sub buffer 0 bytes_read
 
 let rec receive_until_done (r,w,p) handler buffer partial =
+  (* TODO: move Bencode mentinos other than marshal/parse to Bencode module *)
   let parse_single raw bytes_read =
     let parsed = try Some (Bencode.parse raw) with
       | _ -> None in
