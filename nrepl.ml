@@ -22,45 +22,37 @@ let send w pending message =
     | Some id -> pending := id :: (! pending)
     | None -> Printf.eprintf "  Sending message without id!\n%!"
 
-(* TODO: there's still a bug here; see `grench help copying` *)
-let get_leftover buffer parsed bytes_read =
-  match parsed with
-    | Some parsed ->
-      let bytes_parsed = String.length (Bencode.marshal parsed) in
-      let length = bytes_read - bytes_parsed in
-      String.sub buffer bytes_parsed length
-    | None -> String.sub buffer 0 bytes_read
-
 let rec receive_until_done (r,w,p) handler buffer partial =
-  (* TODO: move Bencode mentinos other than marshal/parse to Bencode module *)
-  let parse_single raw bytes_read =
-    let parsed = try Some (Bencode.parse raw) with
-      | _ -> None in
-    let leftover = get_leftover buffer parsed bytes_read in
-    (parsed, leftover) in
+  let parse_single contents =
+    try let parsed = Bencode.parse contents in
+        let bytes_parsed = String.length (Bencode.marshal parsed) in
+        let total_bytes = String.length contents in
+        let leftover_length = total_bytes - bytes_parsed in
+        let leftover = String.sub contents bytes_parsed leftover_length in
+        (Some parsed, leftover)
+    with
+      | _ -> (None, contents) in
 
-  let rec handle_responses handler raw bytes_read =
-    match parse_single raw bytes_read with
-      | Some Bencode.Dict parsed, leftover -> handler (r,w,p) raw parsed;
+  let rec handle_responses handler contents =
+    match parse_single contents with
+      | Some Bencode.Dict parsed, leftover -> handler (r,w,p) contents parsed;
         let re_encoded = (Bencode.marshal (Bencode.Dict parsed)) in
-        let bytes_parsed = String.length re_encoded in
         debug ("<- " ^ re_encoded);
-        handle_responses handler leftover (bytes_read - bytes_parsed)
+        handle_responses handler leftover
       | Some parsed, leftover -> Printf.printf "Unexpected %s: %s | %s \n%!"
         (Bencode.string_of_type parsed) (Bencode.marshal parsed) leftover;
-        handle_responses handler leftover bytes_read
+        handle_responses handler leftover
       | None, leftover -> leftover in
 
-  let parse_response handler buffer resp =
+  let parse_response handler buffer partial resp =
     match resp with
       | `Eof -> Reader.close r
-      | `Ok bytes_read -> let raw = String.sub buffer 0 bytes_read in
+      | `Ok bytes_read -> let just_read = String.sub buffer 0 bytes_read in
                           let partial =
-                            handle_responses handler raw bytes_read in
+                            handle_responses handler (partial ^ just_read) in
                           receive_until_done (r,w,p) handler buffer partial in
 
-  String.blit partial 0 buffer 0 (String.length partial);
-  Reader.read r buffer >>= parse_response handler buffer
+  Reader.read r buffer >>= parse_response handler buffer partial
 
 let get_session buffer resp =
   let no_session ()  = Printf.eprintf "No session!"; Pervasives.exit 0 in
