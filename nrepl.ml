@@ -44,7 +44,7 @@ let send w pending (message,actions) =
     | Some id -> Hashtbl.replace pending ~key:id ~data:actions
     | None -> Printf.eprintf "  Sending message without id!\n%!"
 
-let rec receive_until_done (r,w,p) handler buffer partial =
+let rec loop (r,w,p) handler buffer partial =
   let parse_single contents =
     try let parsed = Bencode.parse contents in
         let bytes_parsed = String.length (Bencode.marshal parsed) in
@@ -74,7 +74,7 @@ let rec receive_until_done (r,w,p) handler buffer partial =
       | `Ok bytes_read -> let just_read = String.sub buffer 0 bytes_read in
                           let partial =
                             handle_responses handler (partial ^ just_read) in
-                          receive_until_done (r,w,p) handler buffer partial in
+                          loop (r,w,p) handler buffer partial in
 
   debug "Receiving message";
   Reader.read r buffer >>= parse_response handler buffer partial
@@ -119,4 +119,4 @@ let new_session host port messages handler =
     initiate_session (s,r,w,pending) buffer
     >>= (fun (_, r, w, p, session) ->
          ignore (send_all_messages (w,p) messages session);
-         receive_until_done (r,w,p) handler buffer ""))
+         loop (r,w,p) handler buffer ""))
