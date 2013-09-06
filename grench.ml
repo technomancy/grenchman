@@ -53,5 +53,5 @@ let () =
       | Some ["--leiningen-version"] | Some ["--lein-version"] ->
         lein_main ["version"]
       | Some ["repl"] -> lein_main ["run"; "-m"; "clojure.main/main"; "-r"]
-      | Some ("main" :: tl) -> Cljmain.cljmain tl
+      | Some ("main" :: tl) -> Main.main tl
       | Some args -> lein_main args

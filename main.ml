@@ -12,7 +12,7 @@ let rec repl_port port_file =
     | None -> let cwd = Sys.getcwd () in
               let root = Client.find_root cwd cwd in
               String.concat ~sep:Filename.dir_sep [root; ".nrepl-port"] in
-  match Client.repl_port "CLJMAIN_PORT" filename with
+  match Client.repl_port "LEIN_REPL_PORT" filename with
   | Some p -> p
   | None -> Printf.eprintf
               "%s\n%!"
@@ -82,7 +82,7 @@ let process_args args options =
   | None -> (options, args)
 
 (* Run a clojure main *)
-let cljmain args =
+let main args =
   let (options,args) =
     process_args
       args
