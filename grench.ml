@@ -52,6 +52,6 @@ let () =
       | Some ["--version"] | Some ["-v"] -> printf "Grenchman 0.1.0\n%!"
       | Some ["--leiningen-version"] | Some ["--lein-version"] ->
         lein_main ["version"]
-      | Some ["repl"] -> lein_main ["run"; "-m"; "clojure.main/main"; "-r"]
+      | Some ("repl" :: tl) -> Repl.main tl
       | Some ("main" :: tl) -> Main.main tl
       | Some args -> lein_main args

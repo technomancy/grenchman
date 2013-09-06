@@ -1,10 +1,10 @@
 open Async.Std
 open Core.Std
 open Printf
+open Ctypes
+open Foreign
 
 let exit = Pervasives.exit
-
-let rdr = Reader.create (Async_unix.Fd.stdin ())
 
 let eval_message code session =
   ([("session", session);
@@ -25,11 +25,9 @@ let stdin_message input session =
 let send_input resp (r,w,p) result =
   match List.Assoc.find resp "session" with
     | Some Bencode.String(session) -> (match result with
-        | `Ok input -> Nrepl.send w p (stdin_message input session)
+        | Some input -> Nrepl.send w p (stdin_message input session)
         (* TODO: only exit on EOF in a top-level input request *)
-        | `Eof ->
-           Nrepl.debug "Eof seen";
-           exit 0)
+        | None -> Nrepl.debug "Eof seen"; exit 0)
     | None | Some _ -> eprintf "  No session in need-input."
 
 let rec handler (r,w,p) raw resp =
@@ -85,8 +83,8 @@ let rec handler (r,w,p) raw resp =
          exit 1
       | Bencode.String "unknown-session" :: tl ->
          eprintf "Unknown session.\n"; exit 1
-      | Bencode.String "need-input" :: tl ->
-         ignore (Reader.read_line rdr >>| send_input resp (r,w,p)); ()
+      | Bencode.String("need-input") :: tl ->
+        send_input resp (r,w,p) (Readline.read "")
       | x -> printf "  Unknown status: %s\n%!"
                     (Bencode.marshal (Bencode.List(x))) in
 
@@ -119,13 +117,25 @@ let repl_port root =
                 | `Yes -> In_channel.read_all filename
                 | `No | `Unknown -> port_err ()
 
-let initiate port result =
-  match result with
-    | `Ok input -> Nrepl.new_session "127.0.0.1" port
-                                     [(eval_message input)] handler
-    | `Eof -> exit 0
+let initiate port =
+  match Readline.read "> " with
+    | Some input -> Nrepl.new_session "127.0.0.1" port
+      [(eval_message input)] handler
+    | None -> exit 0
 
-let main root =
+(* TODO: untangle Main and Client *)
+let rec find_root cwd original =
+  match Sys.file_exists (String.concat ~sep:Filename.dir_sep
+                           [cwd; "project.clj"]) with
+    | `Yes -> cwd
+    | `No | `Unknown -> if (Filename.dirname cwd) = cwd then
+        original
+      else
+        find_root (Filename.dirname cwd) original
+
+let main args =
+  let cwd = Sys.getcwd () in
+  let root = find_root cwd cwd in
   let port = Int.of_string (repl_port root) in
-  printf "> %!";
-  Reader.read_line rdr >>| initiate port
+  initiate port;
+  never_returns (Scheduler.go ())
