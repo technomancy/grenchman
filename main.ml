@@ -1,24 +1,24 @@
 open Async.Std
 open Core.Std
 
+(* This module is for running in-project -main functions; it does not *)
+(* act as grenchman's own entry point. *)
+
 let port_err =
-  "Couldn't read port from .nrepl-port or LEIN_REPL_PORT.\n
+  "Couldn't read port from .nrepl-port or GRENCH_PORT.\n
 If Leiningen is not running, launch `lein repl :headless' from the
 project directory and try again.\n"
 
-let rec repl_port port_file =
+let repl_port port_file =
   let filename = match port_file with
     | Some s -> s
     | None -> let cwd = Sys.getcwd () in
               let root = Client.find_root cwd cwd in
               String.concat ~sep:Filename.dir_sep [root; ".nrepl-port"] in
-  match Client.repl_port "LEIN_REPL_PORT" filename with
+  match Client.repl_port "GRENCH_PORT" filename with
   | Some p -> p
-  | None -> Printf.eprintf
-              "%s\n%!"
-              ("Could not find repl to connect to, and jarpath and " ^
-                 "port-file are not specified, so cannot start one");
-            Pervasives.exit 1
+  | None -> Printf.eprintf "%s%!" port_err;
+    Pervasives.exit 1
 
 let main_form =
   Printf.sprintf "(do

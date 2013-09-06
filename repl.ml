@@ -105,13 +105,13 @@ let rec handler (r,w,p) raw resp =
               | [] -> ()
 
 let port_err () =
-  eprintf "Couldn't read port from .nrepl-port or LEIN_REPL_PORT.\n
+  eprintf "Couldn't read port from .nrepl-port or GRENCH_PORT.\n
 If Leiningen is not running, launch `lein trampoline repl :headless' from
 outside a project directory and try again.\n";
   Pervasives.exit 1
 
 let repl_port root =
-  match Sys.getenv "LEIN_REPL_PORT" with
+  match Sys.getenv "GRENCH_PORT" with
     | Some port -> port
     | None -> let filename = String.concat
                 ~sep:Filename.dir_sep [root; ".nrepl-port"] in

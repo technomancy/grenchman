@@ -30,10 +30,6 @@ let main ns form port =
                             Repl.handler);
   never_returns (Scheduler.go ())
 
-let port_err msg =
-  eprintf "%s\n%!" msg;
-  Pervasives.exit 1
-
 (* Return an optional int for the port number, based on
    an environment variable or on the contents of the
    specified filename, if it exists. *)
