@@ -24,6 +24,15 @@ let stdin_message input session =
     ("session", session)],
    Nrepl.default_actions)
 
+let stacktrace_message =
+  eval_message "(clojure.stacktrace/print-cause-trace *e)" "user"
+
+let print_stacktrace w p resp  =
+  match List.Assoc.find resp "session" with
+    | Some Bencode.String(session) ->
+      Nrepl.send w p (stacktrace_message session)
+    | Some _ | None -> eprintf "  eval-error with no session."
+
 let send_input resp (r,w,p) result =
   match List.Assoc.find resp "session" with
     | Some Bencode.String(session) -> (match result with
@@ -55,18 +64,6 @@ let rec handler handle_done (r,w,p) raw resp =
     | ("session", _) | ("id", _) -> ()
     | (k, v) -> printf "  Unknown response: %s %s\n%!" k v in
 
-  let rec execute_actions actions resp =
-    match resp with
-    | (k, Bencode.String v) :: tl ->
-       handle actions k v;
-       execute_actions actions tl
-    | ("status", Bencode.List _) :: tl ->
-       execute_actions actions tl
-    | (k, _) :: tl ->
-       eprintf "  Unknown response: %s %s\n%!" k raw;
-       execute_actions actions tl
-    | [] -> () in
-
   let resp_actions resp =
     let lookup_actions id = match Hashtbl.find p id with
       | Some actions -> actions
@@ -83,9 +80,7 @@ let rec handler handle_done (r,w,p) raw resp =
         remove_pending p (List.Assoc.find resp "id");
         handle_done (r,w,p) resp
       | Bencode.String "eval-error" ->
-         eprintf "%s\n%!" "eval-error";
-         execute_actions Nrepl.print_all resp;
-         Nrepl.debug raw
+        print_stacktrace w p resp
       | Bencode.String "unknown-session" ->
          eprintf "Unknown session.\n"
       | Bencode.String "need-input" ->
