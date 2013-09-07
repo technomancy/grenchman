@@ -22,6 +22,9 @@ let stdin_message input session =
     ("session", session)],
    Nrepl.default_actions)
 
+let stacktrace_message session =
+  eval_message "(clojure.stacktrace/print-cause-trace *e)" session
+
 let send_input resp (r,w,p) result =
   match List.Assoc.find resp "session" with
     | Some Bencode.String(session) -> (match result with
@@ -79,10 +82,18 @@ let rec handler (r,w,p) raw resp =
       (* TODO: handle messages with multiple status fields by recuring on tl *)
       | Bencode.String "done" :: tl -> handle_done resp p
       | Bencode.String "eval-error" :: tl ->
-         Printf.eprintf "%s\n%!" "eval-error";
-         execute_actions Nrepl.print_all resp;
-         Nrepl.debug raw;
-         exit 1
+         (match List.Assoc.find resp "session" with
+          | Some Bencode.String session ->
+             Nrepl.send w p (stacktrace_message session)
+          | Some _ -> eprintf "  Unknown session type\n%!";
+                      Printf.eprintf "%s\n%!" "eval-error";
+                      execute_actions Nrepl.print_all resp;
+                      exit 1
+          | None ->
+             Printf.eprintf "%s\n%!" "eval-error";
+             execute_actions Nrepl.print_all resp;
+             Nrepl.debug raw;
+             exit 1)
       | Bencode.String "unknown-session" :: tl ->
          eprintf "Unknown session.\n"; exit 1
       | Bencode.String "need-input" :: tl ->
