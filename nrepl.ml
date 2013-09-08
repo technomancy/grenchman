@@ -11,9 +11,9 @@ type msg_actions =
 let do_nothing _ = ()
 
 let default_actions =
-    { out = Printf.printf "%s\n%!";
-      err = Printf.eprintf "%s\n%!";
-      ex = Printf.eprintf "%s\n%!";
+    { out = Printf.printf "%s%!";
+      err = Printf.eprintf "%s%!";
+      ex = Printf.eprintf "%s%!";
       value = do_nothing;
     }
 
@@ -68,7 +68,7 @@ let rec loop (r,w,p) handler buffer partial =
 
   let parse_response handler buffer partial resp =
     match resp with
-      | `Eof -> 
+      | `Eof ->
          debug "Eof seen";
          Reader.close r
       | `Ok bytes_read -> let just_read = String.sub buffer 0 bytes_read in
@@ -97,17 +97,15 @@ let rec send_messages (w,p) messages session =
      send_messages (w,p) tail session
   | [] -> ()
 
-(* Write a list of messages to the nrepl server *)
-let send_all_messages (w,p) messages session =
+let defer_send_messages (w,p) messages session =
   let f ivar =
     Ivar.fill ivar (send_messages (w,p) messages session)
   in
   Deferred.create f
 
-(* Returns a deferred tuple with a session id *)
 let initiate_session (s,r,w,p) buffer =
   Reader.read r buffer
-  >>= fun resp -> return (s,r,w,p,get_session buffer resp)
+  >>| fun resp -> (s,r,w,p,get_session buffer resp)
 
 (* Create a new session *)
 let new_session host port messages handler =
@@ -118,5 +116,5 @@ let new_session host port messages handler =
     send w pending ([("op", "clone"); ("id", "init")], quiet_actions);
     initiate_session (s,r,w,pending) buffer
     >>= (fun (_, r, w, p, session) ->
-         ignore (send_all_messages (w,p) messages session);
+         ignore (defer_send_messages (w,p) messages session);
          loop (r,w,p) handler buffer ""))
