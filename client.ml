@@ -39,11 +39,11 @@ let remove_pending pending id =
         Hashtbl.remove pending id
     | None | Some _ -> eprintf "  Unknown message id.\n%!"
 
-let handle_done pending =
-  if Hashtbl.keys pending = ["init"] then exit 0
+let handle_done (r,w,p) _ =
+  if Hashtbl.keys p = ["init"] then exit 0
 
 (* TODO: clarify what belongs here vs what goes in Nrepl *)
-let rec handler (r,w,p) raw resp =
+let rec handler handle_done (r,w,p) raw resp =
   let handle actions k v = match (k, v) with
     | ("out", out) -> actions.Nrepl.out out
     | ("err", out) -> actions.Nrepl.err out
@@ -79,7 +79,7 @@ let rec handler (r,w,p) raw resp =
       (* TODO: handle messages with multiple status fields by recuring on tl *)
       | Bencode.String "done" :: tl ->
         remove_pending p (List.Assoc.find resp "id");
-        handle_done p
+        handle_done (r,w,p) resp
       | Bencode.String "eval-error" :: tl ->
          Printf.eprintf "%s\n%!" "eval-error";
          execute_actions Nrepl.print_all resp;
@@ -100,13 +100,14 @@ let rec handler (r,w,p) raw resp =
               match resp with
               | (k, Bencode.String v) :: tl ->
                  handle actions k v;
-                 handler (r,w,p) raw tl
+                 handler handle_done (r,w,p) raw tl
               | (k, _) :: tl ->
                  eprintf "  Unknown int response: %s %s\n%!" k raw;
-                 handler (r,w,p) raw tl
+                 handler handle_done (r,w,p) raw tl
               | [] -> ()
 
-let eval port messages =
+let eval port messages handle_done =
+  let handler = handler handle_done in
   let _ = Nrepl.new_session "127.0.0.1" port messages handler in
   never_returns (Scheduler.go ())
 
@@ -142,4 +143,4 @@ let main port args =
     | [] -> eprintf "Missing ns argument."; exit 1
     | ns :: args -> let form = main_form ns (splice_args args) in
                     let messages = [eval_message form "user"] in
-                    eval port messages
+                    eval port messages handle_done

@@ -48,4 +48,4 @@ let main_message args session =
 
 let main args =
   let port = repl_port () in
-  Client.eval port [main_message args]
+  Client.eval port [main_message args] Client.handle_done

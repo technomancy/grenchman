@@ -1,16 +1,33 @@
 open Core.Std
+open Async.Std
+
+let ns = ref "user"
 
 let repl_message input session =
   ([("session", session);
     ("op", "eval");
-    ("id", "repl-init");
+    ("id", "repl-" ^ (Uuid.to_string (Uuid.create ())));
     ("ns", "user");
     ("code", input)],
    Nrepl.print_all)
 
-let rec main port =
-  match Readline.read "> " with
-    | Some input -> let _ = Client.eval port [repl_message input] in main port
-    | None -> exit 0
+let dummy_message session =
+  ([("session", session);
+    ("op", "eval");
+    ("id", "dummy");
+    ("ns", "user");
+    ("code", "nil")],
+   Nrepl.print_all)
 
+let rec loop (r,w,p) resp =
+  let prompt = (!ns ^ "=> ") in
+  match Readline.read prompt, List.Assoc.find resp "session" with
+    | Some input, Some Bencode.String(session) ->
+      Nrepl.send w p (repl_message input session)
+    | Some _, _ -> Printf.eprintf "Missing session.\n"; Pervasives.exit 1
+    | None, _ -> Pervasives.exit 0
 
+let main port =
+  let handler = Client.handler loop in
+  let _ = Nrepl.new_session "127.0.0.1" port [dummy_message] handler in
+  never_returns (Scheduler.go ())
