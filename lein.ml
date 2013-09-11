@@ -18,8 +18,6 @@ let repl_port () =
         | `Yes -> int_of_string (In_channel.read_all filename)
         | `No | `Unknown -> eprintf "%s%!" port_err; exit 1
 
-let ns = "leiningen.core.main"
-
 let form = sprintf "(binding [*cwd* \"%s\", *exit-process?* false]
                       (System/setProperty \"leiningen.original.pwd\" \"%s\")
 
@@ -37,9 +35,17 @@ let form = sprintf "(binding [*cwd* \"%s\", *exit-process?* false]
                             (when-not (and (number? c) (zero? c))
                               (throw e))))))"
 
-let main args =
+let main_message args session =
   let cwd = Sys.getcwd () in
   let root = Client.find_root cwd cwd in
-  let port = repl_port () in
   let form = form root cwd (Client.splice_args args) in
-  Client.eval port "leiningen.core.main" form
+  ([("session", session);
+    ("op", "eval");
+    ("id", "main");
+    ("ns", "leiningen.core.main");
+    ("code", form)],
+   Nrepl.exit_actions)
+
+let main args =
+  let port = repl_port () in
+  Client.eval port [main_message args]

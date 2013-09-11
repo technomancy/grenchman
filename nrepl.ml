@@ -20,6 +20,9 @@ let default_actions =
 let quiet_actions =
   { default_actions with out = do_nothing; }
 
+let exit_actions =
+  { quiet_actions with ex = fun e -> Pervasives.exit 1 }
+
 let print_all =
   { default_actions with value = Printf.printf "%s\n%!"; }
 

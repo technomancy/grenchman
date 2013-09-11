@@ -105,8 +105,8 @@ let rec handler (r,w,p) raw resp =
                  handler (r,w,p) raw tl
               | [] -> ()
 
-let eval port ns form =
-  let _ = Nrepl.new_session "127.0.0.1" port [eval_message form ns] handler in
+let eval port messages =
+  let _ = Nrepl.new_session "127.0.0.1" port messages handler in
   never_returns (Scheduler.go ())
 
 (* invoking main functions *)
@@ -140,4 +140,5 @@ let main port args =
   match args with
     | [] -> eprintf "Missing ns argument."; exit 1
     | ns :: args -> let form = main_form ns (splice_args args) in
-                    eval port "user" form
+                    let messages = [eval_message form "user"] in
+                    eval port messages
