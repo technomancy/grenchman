@@ -32,6 +32,16 @@ let send_input resp (r,w,p) result =
            exit 0)
     | None | Some _ -> eprintf "  No session in need-input."
 
+let remove_pending pending id =
+  Nrepl.debug ("-p " ^ String.concat ~sep:" " (Hashtbl.keys pending));
+  match id with
+    | Some Bencode.String(id) -> if Hashtbl.mem pending id then
+        Hashtbl.remove pending id
+    | None | Some _ -> eprintf "  Unknown message id.\n%!"
+
+let handle_done pending =
+  if Hashtbl.keys pending = ["init"] then exit 0
+
 (* TODO: clarify what belongs here vs what goes in Nrepl *)
 let rec handler (r,w,p) raw resp =
   let handle actions k v = match (k, v) with
@@ -41,17 +51,6 @@ let rec handler (r,w,p) raw resp =
     | ("value", value) -> actions.Nrepl.value value
     | ("session", _) | ("id", _) | ("ns", _) -> ()
     | (k, v) -> printf "  Unknown response: %s %s\n%!" k v in
-
-  let remove_pending pending id =
-    Nrepl.debug ("-p " ^ String.concat ~sep:" " (Hashtbl.keys pending));
-    match id with
-      | Some Bencode.String(id) -> if Hashtbl.mem pending id then
-                                     Hashtbl.remove pending id
-      | None | Some _ -> eprintf "  Unknown message id.\n%!" in
-
-  let handle_done resp pending =
-    remove_pending pending (List.Assoc.find resp "id");
-    if Hashtbl.keys pending = ["init"] then exit 0 in
 
   let rec execute_actions actions resp =
     match resp with
@@ -78,7 +77,9 @@ let rec handler (r,w,p) raw resp =
   let handle_status resp status =
     match status with
       (* TODO: handle messages with multiple status fields by recuring on tl *)
-      | Bencode.String "done" :: tl -> handle_done resp p
+      | Bencode.String "done" :: tl ->
+        remove_pending p (List.Assoc.find resp "id");
+        handle_done p
       | Bencode.String "eval-error" :: tl ->
          Printf.eprintf "%s\n%!" "eval-error";
          execute_actions Nrepl.print_all resp;

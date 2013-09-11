@@ -79,7 +79,6 @@ let rec loop (r,w,p) handler buffer partial =
                             handle_responses handler (partial ^ just_read) in
                           loop (r,w,p) handler buffer partial in
 
-  debug "Receiving message";
   Reader.read r buffer >>= parse_response handler buffer partial
 
 let get_session buffer resp =

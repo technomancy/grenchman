@@ -28,5 +28,6 @@ let () =
       | Some ("main" :: args) -> Client.main (repl_port ".nrepl-port") args
       | Some ["--leiningen-version"] | Some ["--lein-version"] ->
         Lein.main ["version"]
-      | Some ["repl"] -> Lein.main ["run"; "-m"; "clojure.main/main"; "-r"]
+      | Some ["raw-repl"] -> Lein.main ["run"; "-m"; "clojure.main/main"; "-r"]
+      | Some ["repl"] -> Repl.main (repl_port ".nrepl-port")
       | Some args -> Lein.main args

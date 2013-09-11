@@ -1,1 +1,1 @@
-true:package(core),package(async),thread,annot,debugging
+true:package(core),package(async),package(ctypes.foreign),thread,annot,debugging
