@@ -6,6 +6,8 @@ let rdr = Reader.create (Async_unix.Fd.stdin ())
 
 let exit = Pervasives.exit
 
+let ns = ref "user"
+
 let eval_message code ns session =
   ([("session", session);
     ("op", "eval");
@@ -49,7 +51,8 @@ let rec handler handle_done (r,w,p) raw resp =
     | ("err", out) -> actions.Nrepl.err out
     | ("ex", out) | ("root-ex", out) -> actions.Nrepl.ex out
     | ("value", value) -> actions.Nrepl.value value
-    | ("session", _) | ("id", _) | ("ns", _) -> ()
+    | ("ns", new_ns) -> ns := new_ns
+    | ("session", _) | ("id", _) -> ()
     | (k, v) -> printf "  Unknown response: %s %s\n%!" k v in
 
   let rec execute_actions actions resp =

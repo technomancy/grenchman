@@ -61,8 +61,7 @@ let rec loop (r,w,p) handler buffer partial =
   let rec handle_responses handler contents =
     match parse_single contents with
       | Some Bencode.Dict parsed, leftover -> handler (r,w,p) contents parsed;
-        let re_encoded = (Bencode.marshal (Bencode.Dict parsed)) in
-        debug ("<- " ^ re_encoded);
+        debug ("<- " ^ (Bencode.marshal (Bencode.Dict parsed)));
         handle_responses handler leftover
       | Some parsed, leftover -> Printf.printf "Unexpected %s: %s | %s \n%!"
         (Bencode.string_of_type parsed) (Bencode.marshal parsed) leftover;
@@ -92,7 +91,6 @@ let get_session buffer resp =
             | Some _ | None -> no_session ()
 
 let rec send_messages (w,p) messages session =
-  debug "Sending message";
   match messages with
   | message :: tail ->
      message session |> send w p;
