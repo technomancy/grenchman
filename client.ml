@@ -79,35 +79,27 @@ let rec handler handle_done (r,w,p) raw resp =
 
   let handle_status resp status =
     match status with
-      (* TODO: handle messages with multiple status fields by recuring on tl *)
-      | Bencode.String "done" :: tl ->
+      | Bencode.String "done" ->
         remove_pending p (List.Assoc.find resp "id");
         handle_done (r,w,p) resp
-      | Bencode.String "eval-error" :: tl ->
-         Printf.eprintf "%s\n%!" "eval-error";
+      | Bencode.String "eval-error" ->
+         eprintf "%s\n%!" "eval-error";
          execute_actions Nrepl.print_all resp;
-         Nrepl.debug raw;
-         exit 1
-      | Bencode.String "unknown-session" :: tl ->
-         eprintf "Unknown session.\n"; exit 1
-      | Bencode.String "need-input" :: tl ->
+         Nrepl.debug raw
+      | Bencode.String "unknown-session" ->
+         eprintf "Unknown session.\n"
+      | Bencode.String "need-input" ->
          ignore (Reader.read_line rdr >>| send_input resp (r,w,p)); ()
-      | x -> printf "  Unknown status: %s\n%!"
-                    (Bencode.marshal (Bencode.List(x))) in
+      | x -> printf "  Unknown status: %s\n%!" (Bencode.marshal x) in
 
-  (* currently if it's a status message we ignore every other field *)
-  match List.Assoc.find resp "status" with
-    | Some Bencode.List status -> handle_status resp status
-    | Some _ -> eprintf "  Unexpected status type: %s\n%!" raw
-    | None -> let actions = resp_actions resp in
-              match resp with
-              | (k, Bencode.String v) :: tl ->
-                 handle actions k v;
-                 handler handle_done (r,w,p) raw tl
-              | (k, _) :: tl ->
-                 eprintf "  Unknown int response: %s %s\n%!" k raw;
-                 handler handle_done (r,w,p) raw tl
-              | [] -> ()
+  let handle_clause resp clause =
+    match clause with
+      | k, Bencode.String v -> handle (resp_actions resp) k v
+      | "status", Bencode.List(status) -> List.iter status (handle_status resp)
+      | k, v ->
+        eprintf "  Unknown %s response: %s %s\n%!" (Bencode.string_of_type v) k raw in
+
+  List.iter resp (handle_clause resp)
 
 let eval port messages handle_done =
   let handler = handler handle_done in
@@ -129,17 +121,17 @@ let splice_args args =
   String.concat ~sep:"\" \"" (List.map args String.escaped)
 
 let main_form =
-  Printf.sprintf "(do
-                    (require '[clojure.stacktrace :refer [print-cause-trace]])
-                    (let [raw (symbol \"%s\")
-                          ns (symbol (or (namespace raw) raw))
-                          m-sym (if (namespace raw) (symbol (name raw)) '-main)]
-                      (require ns)
-                      (try ((ns-resolve ns m-sym) \"%s\")
-                      (catch Exception e
-                        (let [c (:exit-code (ex-data e))]
-                          (when-not (and (number? c) (zero? c))
-                            (print-cause-trace e)))))))"
+  sprintf "(do
+             (require '[clojure.stacktrace :refer [print-cause-trace]])
+             (let [raw (symbol \"%s\")
+                   ns (symbol (or (namespace raw) raw))
+                   m-sym (if (namespace raw) (symbol (name raw)) '-main)]
+               (require ns)
+               (try ((ns-resolve ns m-sym) \"%s\")
+               (catch Exception e
+                 (let [c (:exit-code (ex-data e))]
+                   (when-not (and (number? c) (zero? c))
+                     (print-cause-trace e)))))))"
 
 let main port args =
   match args with

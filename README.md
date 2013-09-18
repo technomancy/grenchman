@@ -1,6 +1,6 @@
 # Grenchman
 
-Fast invocation of Leiningen tasks over nREPL.
+Fast invocation of Clojure code over nREPL.
 
 <a href="http://achewood.com/index.php?date=04022007">
   <img src="comic.gif" align="right"></a>

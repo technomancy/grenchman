@@ -15,7 +15,7 @@ let dummy_message session =
     ("id", "dummy");
     ("ns", "user");
     ("code", "nil")],
-   Nrepl.print_all)
+   Nrepl.default_actions)
 
 let rec loop (r,w,p) resp =
   let prompt = (!Client.ns ^ "=> ") in
