@@ -30,4 +30,5 @@ let () =
         Lein.main ["version"]
       | Some ["raw-repl"] -> Lein.main ["run"; "-m"; "clojure.main/main"; "-r"]
       | Some ["repl"] -> Repl.main (repl_port ".nrepl-port")
+      | Some ["repl"; ":connect"; port] -> Repl.main (int_of_string port)
       | Some args -> Lein.main args
