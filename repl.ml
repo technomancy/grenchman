@@ -6,7 +6,8 @@ let repl_message input session =
     ("op", "eval");
     ("id", "repl-" ^ (Uuid.to_string (Uuid.create ())));
     ("ns", ! Client.ns);
-    ("code", input)],
+    ("code", sprintf "(try %s (catch Exception e
+                        (clojure.stacktrace/print-cause-trace e)))" input)],
    Nrepl.print_all)
 
 let dummy_message session =
