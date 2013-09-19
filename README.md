@@ -70,6 +70,10 @@ civilization like input history and readline bindings. Wrapping with
 which prevents it from working inside a project directory unless the
 in-project repl server technique above is used.
 
+If you get no output from `grench` but your Leiningen process emits an
+`java.io.FileNotFoundException: project.clj` error message, this might
+mean your version of Leiningen is too old; you need at least 2.3.3.
+
 Tasks for all projects will share the same Leiningen instance, so
 projects with have conflicting plugins or hooks may behave unpredictably.
 
