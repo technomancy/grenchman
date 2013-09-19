@@ -6,7 +6,7 @@ open Printf
 let port_err =
   "Couldn't read port from ~/.lein/repl-port or LEIN_REPL_PORT.\n
 If Leiningen is not running, launch `lein repl :headless' from outside a
-project directory and try again."
+project directory and try again.\n"
 
 let repl_port () =
   let filename = String.concat

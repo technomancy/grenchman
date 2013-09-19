@@ -107,8 +107,7 @@ let initiate_session (s,r,w,p) buffer =
   Reader.read r buffer
   >>| fun resp -> (s,r,w,p,get_session buffer resp)
 
-(* Create a new session *)
-let new_session host port messages handler =
+let connect host port messages handler =
   let buffer = (String.create buffer_size) in
   let pending = String.Table.create () in
   Tcp.connect (Tcp.to_host_and_port host port)
@@ -118,3 +117,13 @@ let new_session host port messages handler =
     >>= (fun (_, r, w, p, session) ->
          ignore (defer_send_messages (w,p) messages session);
          loop (r,w,p) handler buffer ""))
+
+(* Create a new session *)
+let new_session host port messages handler =
+  try_with (fun () -> connect host port messages handler)
+  >>| function
+    | Ok () -> ()
+    | Error _ ->
+      eprintf "Could not connect on port %i.\n%!" port;
+      Pervasives.exit 1
+
