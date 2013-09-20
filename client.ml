@@ -82,9 +82,10 @@ let rec handler handle_done (r,w,p) raw resp =
       | Bencode.String "eval-error" ->
         print_stacktrace w p resp
       | Bencode.String "unknown-session" ->
-         eprintf "Unknown session.\n"
+        eprintf "Unknown session.\n"
       | Bencode.String "need-input" ->
-         ignore (Reader.read_line rdr >>| send_input resp (r,w,p)); ()
+        ignore (Reader.read_line rdr >>| send_input resp (r,w,p)); ()
+      | Bencode.String "interrupted" -> print_newline ()
       | x -> printf "  Unknown status: %s\n%!" (Bencode.marshal x) in
 
   let handle_clause resp clause =

@@ -38,13 +38,17 @@ let rec convert_message message converted =
     | (k, v) :: tl -> convert_message tl ((k, Bencode.String(v)) :: converted)
     | [] -> converted
 
+let current_msg_id = ref ""
+
 let send w pending (message,actions) =
   let converted = Bencode.Dict(convert_message message []) in
   let out = Bencode.marshal converted in
   debug ("-> " ^ out);
   Writer.write w out;
   match List.Assoc.find message "id" with
-    | Some id -> Hashtbl.replace pending ~key:id ~data:actions
+    | Some id ->
+      Hashtbl.replace pending ~key:id ~data:actions;
+      current_msg_id := id
     | None -> Printf.eprintf "  Sending message without id!\n%!"
 
 let rec loop (r,w,p) handler buffer partial =
@@ -90,6 +94,20 @@ let get_session buffer resp =
             | Some Bencode.String(session) -> session
             | Some _ | None -> no_session ()
 
+let interrupt_message session id =
+  ([("session", session);
+    ("op", "interrupt");
+    ("id", "interrupt-" ^ (Uuid.to_string (Uuid.create ())));
+    ("interrupt-id", id)],
+   quiet_actions)
+
+(* TODO: input/values get out of sync when interrupts fire or on send-input *)
+let interrupt session w p _ =
+  send w p (interrupt_message session !current_msg_id)
+
+let register_interrupt session w p =
+  Caml.Sys.signal Caml.Sys.sigint (Caml.Sys.Signal_handle (interrupt session w p))
+
 let rec send_messages (w,p) messages session =
   match messages with
   | message :: tail ->
@@ -98,9 +116,7 @@ let rec send_messages (w,p) messages session =
   | [] -> ()
 
 let defer_send_messages (w,p) messages session =
-  let f ivar =
-    Ivar.fill ivar (send_messages (w,p) messages session)
-  in
+  let f ivar = Ivar.fill ivar (send_messages (w,p) messages session) in
   Deferred.create f
 
 let initiate_session (s,r,w,p) buffer =
@@ -115,8 +131,9 @@ let connect host port messages handler =
     send w pending ([("op", "clone"); ("id", "init")], quiet_actions);
     initiate_session (s,r,w,pending) buffer
     >>= (fun (_, r, w, p, session) ->
-         ignore (defer_send_messages (w,p) messages session);
-         loop (r,w,p) handler buffer ""))
+      ignore (register_interrupt session w p);
+      ignore (defer_send_messages (w,p) messages session);
+      loop (r,w,p) handler buffer ""))
 
 (* Create a new session *)
 let new_session host port messages handler =
@@ -126,4 +143,3 @@ let new_session host port messages handler =
     | Error _ ->
       eprintf "Could not connect on port %i.\n%!" port;
       Pervasives.exit 1
-
