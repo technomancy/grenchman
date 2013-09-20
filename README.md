@@ -22,7 +22,7 @@ To build, run the following commands:
 
     $ git clone git@github.com:technomancy/grenchman.git grenchman
     $ cd grenchman
-    $ opam install core async ocamlfind
+    $ opam install ocamlfind core async ctypes
     $ ocamlbuild -use-ocamlfind grench.native
     $ ln -s $PWD/grench.native ~/bin/grench # or somewhere on your $PATH
 

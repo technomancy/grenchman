@@ -2,8 +2,6 @@ open Async.Std
 open Core.Std
 open Printf
 
-let rdr = Reader.create (Async_unix.Fd.stdin ())
-
 let exit = Pervasives.exit
 
 let ns = ref "user"
@@ -36,11 +34,9 @@ let print_stacktrace w p resp  =
 let send_input resp (r,w,p) result =
   match List.Assoc.find resp "session" with
     | Some Bencode.String(session) -> (match result with
-        | `Ok input -> Nrepl.send w p (stdin_message input session)
+        | Some input -> Nrepl.send w p (stdin_message input session)
         (* TODO: only exit on EOF in a top-level input request *)
-        | `Eof ->
-           Nrepl.debug "Eof seen";
-           exit 0)
+        | None -> Nrepl.debug "Eof seen"; exit 0)
     | None | Some _ -> eprintf "  No session in need-input."
 
 let remove_pending pending id =
@@ -84,7 +80,7 @@ let rec handler handle_done (r,w,p) raw resp =
       | Bencode.String "unknown-session" ->
         eprintf "Unknown session.\n"
       | Bencode.String "need-input" ->
-        ignore (Reader.read_line rdr >>| send_input resp (r,w,p)); ()
+        ignore (send_input resp (r,w,p) (Readline.read "")); ()
       | Bencode.String "interrupted" -> print_newline ()
       | x -> printf "  Unknown status: %s\n%!" (Bencode.marshal x) in
 
