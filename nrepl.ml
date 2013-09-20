@@ -13,8 +13,8 @@ let do_nothing _ = ()
 let default_actions =
     { out = Printf.printf "%s%!";
       err = Printf.eprintf "%s%!";
-      ex = Printf.eprintf "%s%!";
       value = do_nothing;
+      ex = do_nothing;
     }
 
 let quiet_actions =
