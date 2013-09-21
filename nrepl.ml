@@ -74,9 +74,7 @@ let rec loop (r,w,p) handler buffer partial =
 
   let parse_response handler buffer partial resp =
     match resp with
-      | `Eof ->
-         debug "Eof seen";
-         Reader.close r
+      | `Eof -> Pervasives.exit 0
       | `Ok bytes_read -> let just_read = String.sub buffer 0 bytes_read in
                           let partial =
                             handle_responses handler (partial ^ just_read) in

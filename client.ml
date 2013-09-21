@@ -49,7 +49,6 @@ let remove_pending pending id =
 let handle_done (r,w,p) _ =
   if Hashtbl.keys p = ["init"] then exit 0
 
-(* TODO: clarify what belongs here vs what goes in Nrepl *)
 let rec handler handle_done (r,w,p) raw resp =
   let handle actions k v = match (k, v) with
     | ("out", out) -> actions.Nrepl.out out

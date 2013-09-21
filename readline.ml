@@ -24,7 +24,6 @@ let read prompt =
     done;
     s in
 
-  (* TODO: teach readline that C-a shouldn't always go to BOL *)
   match readline prompt with
     | Some s -> let input = string_of_char_ptr s in
                 add_history input; Some input
