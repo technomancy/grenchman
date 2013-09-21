@@ -101,9 +101,10 @@ let interrupt_message session id =
     ("interrupt-id", id)],
    quiet_actions)
 
-(* TODO: input/values get out of sync when interrupts fire or on send-input *)
 let interrupt session w p _ =
-  send w p (interrupt_message session !current_msg_id)
+  match Hashtbl.keys p with
+    | ["init"] | [] -> Pervasives.exit 0
+    | _ -> send w p (interrupt_message session !current_msg_id)
 
 let register_interrupt session w p =
   Caml.Sys.signal Caml.Sys.sigint (Caml.Sys.Signal_handle (interrupt session w p))
