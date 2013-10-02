@@ -28,3 +28,5 @@ let read prompt =
     | Some s -> let input = string_of_char_ptr s in
                 add_history input; Some input
     | None -> None
+
+let _ = (foreign_value ~from:libreadline "rl_readline_name" string) <-@ "grench"
