@@ -3,7 +3,7 @@ open Printf
 
 (* Entry point module; handles command-line args and dispatching. *)
 
-let usage = "Grenchman runs Clojure code quickly.
+let help = "Grenchman runs Clojure code quickly.
 
 Commands:
 
@@ -17,7 +17,7 @@ Running with no arguments will read code from stdin.
 
 let port_err = "Couldn't read port from .nrepl-port or $GRENCH_PORT.\n"
 
-let repl_port port_file =
+let repl_port port_file err_string =
   let cwd = Sys.getcwd () in
   let root = Client.find_root cwd cwd in
   let filename = String.concat ~sep:Filename.dir_sep [root; port_file] in
@@ -25,25 +25,32 @@ let repl_port port_file =
     | Some port -> int_of_string port
     | None -> match Sys.file_exists filename with
         | `Yes -> int_of_string (In_channel.read_all filename)
-        | `No | `Unknown -> eprintf "%s%!" port_err; exit 111
+        | `No | `Unknown -> eprintf "%s%!" err_string; exit 111
 
 let () =
   if ! Sys.interactive then () else
     match Sys.argv |> Array.to_list |> List.tl with
-      | Some ["--grench-help"] -> printf "%s\n%!" usage
-      | Some ["--version"] | Some ["-v"] -> printf "Grenchman 0.1.0\n%!"
+      | Some ["--help"] | Some ["-h"] | Some ["-?"] | Some ["help"] ->
+        printf "%s\n%!" help
+      | Some ["--version"] | Some ["-v"] | Some ["version"] ->
+        printf "Grenchman 0.1.0\n%!"
 
       | Some ("eval" :: args) ->
-        Client.main (repl_port ".nrepl-port")
+        Client.main (repl_port ".nrepl-port" port_err)
           ("clojure.main/main" :: "-e" :: args)
 
-      | Some ("main" :: args) -> Client.main (repl_port ".nrepl-port") args
+      | Some ("main" :: args) ->
+        Client.main (repl_port ".nrepl-port" port_err) args
 
-      | Some ["repl"] -> Repl.main (repl_port ".nrepl-port")
-      | Some ["repl"; ":connect"; port] -> Repl.main (int_of_string port)
+      | Some ["repl"] ->
+        Repl.main (repl_port ".nrepl-port" port_err)
+      | Some ["repl"; ":connect"; port] ->
+        Repl.main (int_of_string port)
 
-      | Some ("lein" :: args) -> Lein.main args
+      | Some ("lein" :: args) ->
+        Lein.main args
 
-      | None | Some [] -> Client.stdin_eval (repl_port ".nrepl-port")
+      | None | Some [] ->
+        Client.stdin_eval (repl_port ".nrepl-port" (port_err ^ "\n" ^ help))
 
-      | Some _ -> eprintf "Unknown command.\n\n%s" usage; exit 1
+      | Some _ -> eprintf "Unknown command.\n\n%s" help; exit 1

@@ -2,6 +2,7 @@
 
 ## 0.2.0 / ???
 
+* Read forms from stdin when no args are given.
 * Exit with 111 to indicate connection failure.
 * Use `libreadline` for all console input.
 * Implement `repl` as independent client instead of deferring to Leiningen's.
