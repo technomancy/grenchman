@@ -28,57 +28,51 @@ To build, run the following commands:
 
 ## Usage
 
-You can use `grench` as a replacement for the `lein` script for most
-tasks, with some gotchas listed below.
+Grenchman has four main commands:
 
-Currently it requires Leiningen from git master (newer than 2.3.2). It's
-up to you to launch your own Leiningen process separately:
+* `grench main my.main.ns arg1 arg2` - to run an existing `-main` defn
+* `grench eval "(+ 12 49)"` - to run code provided as argument
+* `grench repl` or `grench repl :connect $PORT` - to connect a repl
+* `grench lein $TASK` - to run Leiningen tasks
 
-    $ cd ~/.lein && lein repl :headless
+Each of these commands connects to a running nREPL server in order to
+avoid JVM startup time. The simplest way to start a project JVM is to
+run `lein trampoline repl :headless` from the project directory in
+another shell. By default the port will be determined by traversing up
+the directory tree until an `.nrepl-port` file is found. Setting the
+`GRENCH_PORT` environment variable overrides this. The `lein`
+invocation above writes the `.nrepl-port` file in the project root for you.
 
-You may find this snippet useful to put in your user profile to
-quickly eval one expression at a time:
+### Leiningen
 
-```clj
-:aliases {"eval" ["run" "-m" "clojure.main/main" "-e"]}
-```
+The `grench lein` subcommand is the exception to this; it connects to
+a Leiningen JVM rather than a project JVM. It looks for the port in
+`~/.lein/repl-port` or `$LEIN_REPL_PORT`; you can launch this server
+using `lein repl :headless` from outside a project directory.
 
-## Faster
+Using Grenchman avoids waiting for Leiningen's JVM to start, but
+project JVMs are still launched like normal by default for most task
+invocations if Leiningen can't find a running project JVM.
 
-Using Grenchman means you never have to wait for Leiningen's JVM to
-start, but project JVMs are still launched like normal by default for
-most task invocations. In order to avoid that, you can run `lein repl`
-(with or without `:headless`) inside the project directory and
-`grench` will automatically route `eval-in-project` calls to that
-running repl instance.
-
-Then you can run things like:
-
-    $ time grench eval '(:status (my.web/app {:uri "/"}))'
-    200
-
-    real    0m0.651s
-    user    0m0.024s
-    sys     0m0.024s
+Currently the Leiningen integration requires running from lein's git
+master (newer than 2.3.2).
 
 ## Gotchas
 
-The `repl` task is currently replaced with a dumbed-down raw
-`clojure.main` repl which lacks all the pleasantries of modern
-civilization like input history and readline bindings. Wrapping with
-`rlwrap` is recommended. It is also affected by a bug in Leiningen
-which prevents it from working inside a project directory unless the
-in-project repl server technique above is used.
-
-If you get no output from `grench` but your Leiningen process emits an
-`java.io.FileNotFoundException: project.clj` error message, this might
-mean your version of Leiningen is too old; you need at least 2.3.3.
+If you get no output from `grench lein ...` but your Leiningen process
+emits an `java.io.FileNotFoundException: project.clj` error message,
+this might mean your version of Leiningen is too old; you need at
+least 2.3.3.
 
 Tasks for all projects will share the same Leiningen instance, so
 projects with have conflicting plugins or hooks may behave unpredictably.
 
+If Grenchman cannot connect on the port specified, it will terminate
+with an exit code of 111, which may be useful for scripting it.
+
 ## License
 
-Copyright © 2013 Phil Hagelberg. Bencode implementation by Prashanth
-Mundkur. Licensed under the GNU General Public License, version 3 or
-later. See COPYING for details.
+Copyright © 2013 Phil Hagelberg and
+[contributors](https://github.com/technomancy/grenchman/contributors). Bencode
+implementation by Prashanth Mundkur. Licensed under the GNU General
+Public License, version 3 or later. See COPYING for details.
