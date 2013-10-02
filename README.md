@@ -30,10 +30,12 @@ To build, run the following commands:
 
 Grenchman has four main commands:
 
-* `grench main my.main.ns arg1 arg2` - to run an existing `-main` defn
-* `grench eval "(+ 12 49)"` - to run code provided as argument
-* `grench repl` or `grench repl :connect $PORT` - to connect a repl
-* `grench lein $TASK` - to run Leiningen tasks
+* `grench eval "(+ 12 49)"` - evals given form
+* `grench main my.main.ns/entry-point arg1 arg2` - runs existing defn
+* `grench repl` or `grench repl :connect $PORT` - connects a repl
+* `grench lein test` - runs a Leiningen task
+
+Running with no arguments will read code from stdin to accomodate shebangs.
 
 Each of these commands connects to a running nREPL server in order to
 avoid JVM startup time. The simplest way to start a project JVM is to

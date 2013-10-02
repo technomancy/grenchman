@@ -130,3 +130,7 @@ let main port args =
     | ns :: args -> let form = main_form ns (splice_args args) in
                     let messages = [eval_message form "user"] in
                     eval port messages handle_done
+
+let stdin_eval port =
+  let input = In_channel.input_lines stdin |> String.concat ~sep:"\n" in
+  main port ["clojure.main/main"; "-e"; input]
