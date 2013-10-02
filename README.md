@@ -52,7 +52,9 @@ using `lein repl :headless` from outside a project directory.
 
 Using Grenchman avoids waiting for Leiningen's JVM to start, but
 project JVMs are still launched like normal by default for most task
-invocations if Leiningen can't find a running project JVM.
+invocations if Leiningen can't find a running project JVM. Note that
+this goes through Leiningen by looking for `.nrepl-port` and doesn't
+check `$GRENCH_PORT`.
 
 Currently the Leiningen integration requires running from lein's git
 master (newer than 2.3.2).
