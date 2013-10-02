@@ -22,7 +22,7 @@ let repl_port port_file =
     | Some port -> int_of_string port
     | None -> match Sys.file_exists filename with
         | `Yes -> int_of_string (In_channel.read_all filename)
-        | `No | `Unknown -> eprintf "%s%!" port_err; exit 1
+        | `No | `Unknown -> eprintf "%s%!" port_err; exit 111
 
 let () =
   if ! Sys.interactive then () else

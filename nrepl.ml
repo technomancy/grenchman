@@ -141,4 +141,4 @@ let new_session host port messages handler =
     | Ok () -> ()
     | Error _ ->
       eprintf "Could not connect on port %i.\n%!" port;
-      Pervasives.exit 1
+      Pervasives.exit 111

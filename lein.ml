@@ -4,7 +4,7 @@ open Printf
 (* Invoking Leiningen tasks. *)
 
 let port_err =
-  "Couldn't read port from ~/.lein/repl-port or LEIN_REPL_PORT.\n
+  "Couldn't read port from ~/.lein/repl-port or $LEIN_REPL_PORT.\n
 If Leiningen is not running, launch `lein repl :headless' from outside a
 project directory and try again.\n"
 
@@ -16,7 +16,7 @@ let repl_port () =
     | Some port -> int_of_string port
     | None -> match Sys.file_exists filename with
         | `Yes -> int_of_string (In_channel.read_all filename)
-        | `No | `Unknown -> eprintf "%s%!" port_err; exit 1
+        | `No | `Unknown -> eprintf "%s%!" port_err; exit 111
 
 let form = sprintf "(binding [*cwd* \"%s\", *exit-process?* false]
                       (System/setProperty \"leiningen.original.pwd\" \"%s\")
