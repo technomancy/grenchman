@@ -10,13 +10,12 @@ Fast invocation of Clojure code over nREPL.
 You will need to install [opam](http://opam.ocamlpro.com/) and OCaml 4.x to be
 able to build Grenchman.
 
-If you're not sure whether you have 4.x installed or not, you can ensure
-yourself as follows:
+If you're not sure whether you have 4.x installed or not, you can check:
 
     $ opam switch list
     # If your system compiler is 4.x or above, you're ready to go.
     # Otherwise, issue the following command:
-    $ opam switch 4.00.1
+    $ opam switch 4.01.0
 
 To build, run the following commands:
 
@@ -38,30 +37,34 @@ Grenchman has four main commands:
 Running with no arguments will read code from stdin to accomodate shebangs.
 
 Each of these commands connects to a running nREPL server in order to
-avoid JVM startup time. The simplest way to start a project JVM is to
-run `lein trampoline repl :headless` from the project directory in
-another shell. By default the port will be determined by traversing up
-the directory tree until an `.nrepl-port` file is found. Setting the
-`GRENCH_PORT` environment variable overrides this. The `lein`
-invocation above writes the `.nrepl-port` file in the project root for you.
+avoid JVM startup time. The simplest way to start a project nREPL
+server is to run `lein trampoline repl :headless` from the project
+directory in another shell. All `grench` invocations from inside the
+project directory will use that nREPL, but by setting the
+`GRENCH_PORT` environment variable you can connect to it from outside.
 
 ### Leiningen
 
 The `grench lein` subcommand is the exception to this; it connects to
-a Leiningen JVM rather than a project JVM. It looks for the port in
-`~/.lein/repl-port` or `$LEIN_REPL_PORT`; you can launch this server
-using `lein repl :headless` from outside a project directory.
+a Leiningen nREPL server rather than a project nREPL. It looks for the
+port in `~/.lein/repl-port` or `$LEIN_REPL_PORT`; you can launch this
+server using `lein repl :headless` from outside a project directory.
 
 Using Grenchman avoids waiting for Leiningen's JVM to start, but
-project JVMs are still launched like normal by default for most task
-invocations if Leiningen can't find a running project JVM. Note that
-this goes through Leiningen by looking for `.nrepl-port` and doesn't
-check `$GRENCH_PORT`.
+project JVMs are still launched like normal when necessary if
+Leiningen can't find a running project nREPL server. Note that this
+goes through Leiningen by looking for `.nrepl-port` and doesn't check
+`$GRENCH_PORT`.
 
 Currently the Leiningen integration requires running from lein's git
 master (newer than 2.3.2).
 
 ## Gotchas
+
+By default Leiningen uses compilation settings which trade long-term
+performance for boot speed. With Grenchman you have long-running nREPL
+processes which start rarely, so you should disable this by putting
+`:jvm-opts []` in your `:user` profile.
 
 If you get no output from `grench lein ...` but your Leiningen process
 emits an `java.io.FileNotFoundException: project.clj` error message,
