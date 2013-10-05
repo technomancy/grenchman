@@ -7,10 +7,11 @@ Fast invocation of Clojure code over nREPL.
 
 ## Install
 
-You will need to install [opam](http://opam.ocamlpro.com/) and OCaml 4.x to be
-able to build Grenchman.
+You will need to
+[install opam](http://opam.ocamlpro.com/doc/Quick_Install.html) and
+OCaml 4.x to be able to build Grenchman.
 
-If you're not sure whether you have 4.x installed or not, you can check:
+If you're not sure whether you have 4.x installed or not, you can check with:
 
     $ opam switch list
     # If your system compiler is 4.x or above, you're ready to go.
@@ -22,7 +23,7 @@ To build, run the following commands:
     $ git clone git@github.com:technomancy/grenchman.git grenchman
     $ cd grenchman
     $ opam install ocamlfind core async ctypes
-    $ ocamlbuild -use-ocamlfind grench.native
+    $ ocamlbuild -use-ocamlfind -lflags -cclib,-lreadline grench.native
     $ ln -s $PWD/grench.native ~/bin/grench # or somewhere on your $PATH
 
 ## Usage

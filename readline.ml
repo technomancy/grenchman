@@ -1,13 +1,9 @@
 open Ctypes
 open Foreign
 
-let libreadline = Dl.(dlopen ~filename:"libreadline.so" ~flags:[RTLD_NOW])
-
 let readline = foreign "readline" (string @-> returning (ptr_opt char))
-  ~from:libreadline
 
 let add_history = foreign "add_history" (string @-> returning void)
-  ~from:libreadline
 
 let read prompt =
   let rec strlen p n =
@@ -29,4 +25,4 @@ let read prompt =
                 add_history input; Some input
     | None -> None
 
-let _ = (foreign_value ~from:libreadline "rl_readline_name" string) <-@ "grench"
+let _ = (foreign_value "rl_readline_name" string) <-@ "grench"
