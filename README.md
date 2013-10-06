@@ -57,8 +57,10 @@ Leiningen can't find a running project nREPL server. Note that this
 goes through Leiningen by looking for `.nrepl-port` and doesn't check
 `$GRENCH_PORT`.
 
-Currently the Leiningen integration requires running from lein's git
-master (newer than 2.3.2).
+Currently the Leiningen integration requires Leiningen 2.3.3 or newer.
+If you get no output from `grench lein ...` but your Leiningen process
+emits an `java.io.FileNotFoundException: project.clj` error message,
+upgrading Leiningen should fix it.
 
 ## Gotchas
 
@@ -66,11 +68,6 @@ By default Leiningen uses compilation settings which trade long-term
 performance for boot speed. With Grenchman you have long-running nREPL
 processes which start rarely, so you should disable this by putting
 `:jvm-opts []` in your `:user` profile.
-
-If you get no output from `grench lein ...` but your Leiningen process
-emits an `java.io.FileNotFoundException: project.clj` error message,
-this might mean your version of Leiningen is too old; you need at
-least 2.3.3.
 
 Tasks for all projects will share the same Leiningen instance, so
 projects with have conflicting plugins or hooks may behave unpredictably.
