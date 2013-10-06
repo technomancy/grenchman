@@ -5,26 +5,11 @@ Fast invocation of Clojure code over nREPL.
 <a href="http://achewood.com/index.php?date=04022007">
   <img src="comic.gif" align="right"></a>
 
-## Install
-
-You will need to
-[install opam](http://opam.ocamlpro.com/doc/Quick_Install.html) and
-OCaml 4.x to be able to build Grenchman.
-
-If you're not sure whether you have 4.x installed or not, you can check with:
-
-    $ opam switch list
-    # If your system compiler is 4.x or above, you're ready to go.
-    # Otherwise, issue the following command:
-    $ opam switch 4.01.0
-
-To build, run the following commands:
-
-    $ git clone git@github.com:technomancy/grenchman.git grenchman
-    $ cd grenchman
-    $ opam install ocamlfind core async ctypes
-    $ ocamlbuild -use-ocamlfind -lflags -cclib,-lreadline grench.native
-    $ ln -s $PWD/grench.native ~/bin/grench # or somewhere on your $PATH
+To install, download the appropriate binary from
+http://leiningen.org/grench.html and place it on your path. If
+downloads for your platform are not provided you can use the bytecode
+version (which requires an OCaml installation) or compile your own;
+see "Building" below.
 
 ## Usage
 
@@ -61,6 +46,27 @@ Currently the Leiningen integration requires Leiningen 2.3.3 or newer.
 If you get no output from `grench lein ...` but your Leiningen process
 emits an `java.io.FileNotFoundException: project.clj` error message,
 upgrading Leiningen should fix it.
+
+## Building
+
+You will need to
+[install opam](http://opam.ocamlpro.com/doc/Quick_Install.html) and
+OCaml 4.x to be able to build Grenchman.
+
+If you're not sure whether you have 4.x installed or not, you can check with:
+
+    $ opam switch list
+    # If your system compiler is 4.x or above, you're ready to go.
+    # Otherwise, issue the following command:
+    $ opam switch 4.01.0
+
+To build, run the following commands:
+
+    $ git clone git@github.com:technomancy/grenchman.git grenchman
+    $ cd grenchman
+    $ opam install ocamlfind core async ctypes
+    $ ocamlbuild -use-ocamlfind -lflags -cclib,-lreadline grench.native
+    $ ln -s $PWD/grench.native ~/bin/grench # or somewhere on your $PATH
 
 ## Gotchas
 
