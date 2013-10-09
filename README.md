@@ -7,8 +7,7 @@ Fast invocation of Clojure code over nREPL.
 
 To install, download the appropriate binary from
 http://leiningen.org/grench.html and place it on your path. If
-downloads for your platform are not provided you can use the bytecode
-version (which requires an OCaml installation) or compile your own;
+downloads for your platform are not provided you can compile your own;
 see "Building" below.
 
 ## Usage
