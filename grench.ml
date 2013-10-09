@@ -13,6 +13,9 @@ Commands:
   lein [TASK ARGS...]                   Runs a Leiningen task.
 
 Running with no arguments will read code from stdin.
+
+When running from a Leiningen project directory, the port can usually be
+inferred. Otherwise set the GRENCH_PORT environment variable.
 "
 
 let port_err = "Couldn't read port from .nrepl-port or $GRENCH_PORT.\n"

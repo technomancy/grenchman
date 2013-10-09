@@ -51,7 +51,9 @@ upgrading Leiningen should fix it.
 
 You will need to
 [install opam](http://opam.ocamlpro.com/doc/Quick_Install.html) and
-OCaml 4.x to be able to build Grenchman.
+OCaml 4.x to be able to build Grenchman. You'll also need `libffi` as
+well as `libreadline-dev` (sometimes called `readline-devel` on RPM
+systems).
 
 If you're not sure whether you have 4.x installed or not, you can check with:
 
