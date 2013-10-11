@@ -6,16 +6,43 @@ type msg_actions =
       err : string -> unit;
       ex : string -> unit;
       value : string -> unit;
+      eval_error : Async_unix.Reader.t
+                   * Async_unix.Writer.t
+                   * (string, msg_actions) Core.Std.Hashtbl.t
+                   -> (string * Bencode.t) list -> unit;
+      after_message : unit -> unit;
     }
 
 let do_nothing _ = ()
 
-let default_actions =
-    { out = Printf.printf "%s%!";
-      err = Printf.eprintf "%s%!";
-      value = do_nothing;
-      ex = do_nothing;
-    }
+let rec eval_message ?actions code ns session =
+  ([("session", session);
+    ("op", "eval");
+    ("id", "eval-" ^ (Uuid.to_string (Uuid.create ())));
+    ("ns", ns);
+    ("code", code ^ "\n")],
+   match actions with
+     None -> default_actions
+   | Some actions -> actions)
+
+and default_actions =
+  { out = Printf.printf "%s%!";
+    err = Printf.eprintf "%s%!";
+    value = do_nothing;
+    ex = do_nothing;
+    eval_error = (fun (r,w,p) resp ->
+                  eprintf "default after_message\n%!";
+                  ());
+    after_message = do_nothing
+  }
+
+let stdin_message input session =
+  let uuid = Uuid.to_string (Uuid.create ()) in
+  ([("op", "stdin");
+    ("id", uuid);
+    ("stdin", input ^ "\n");
+    ("session", session)],
+   default_actions)
 
 let quiet_actions =
   { default_actions with out = do_nothing; }
@@ -50,6 +77,39 @@ let send w pending (message,actions) =
       Hashtbl.replace pending ~key:id ~data:actions;
       current_msg_id := id
     | None -> Printf.eprintf "  Sending message without id!\n%!"
+
+(* Return the id from the response.  Returns an Option string. *)
+let response_id resp =
+  match (List.Assoc.find resp "id") with
+    | Some Bencode.String id -> Some id
+    | None | Some _ -> None
+
+(* Return the session from the response.  Returns an Option string. *)
+let response_session resp =
+  match (List.Assoc.find resp "session") with
+    | Some Bencode.String session -> Some session
+    | None | Some _ -> None
+
+(* Return the actions associated with the specified response *)
+let response_actions pending resp =
+  let lookup_actions id = match Hashtbl.find pending id with
+      | Some actions -> actions
+      | None -> default_actions in
+  match response_id resp with
+  | Some id -> lookup_actions id
+  | None -> default_actions
+
+(* Remove an id from the pending message table *)
+let remove_pending pending id =
+  debug ("-p " ^ String.concat ~sep:" " (Hashtbl.keys pending));
+  match id with
+    | Some id -> if Hashtbl.mem pending id then
+                   Hashtbl.remove pending id
+    | None -> eprintf "  Unknown message id.\n%!"
+
+(* Return a list of pending request ids *)
+let pending_ids pending =
+  Hashtbl.keys pending
 
 let rec loop (r,w,p) handler buffer partial =
   let parse_single contents =
