@@ -118,6 +118,7 @@ let main_form =
                    ns (symbol (or (namespace raw) raw))
                    m-sym (if (namespace raw) (symbol (name raw)) '-main)]
                (require ns)
+               (System/setProperty \"grench.cwd\" \"%s\")
                (try ((ns-resolve ns m-sym) \"%s\")
                (catch Exception e
                  (let [c (:exit-code (ex-data e))]
@@ -127,7 +128,8 @@ let main_form =
 let main port args =
   match args with
     | [] -> eprintf "Missing ns argument."; exit 1
-    | ns :: args -> let form = main_form ns (splice_args args) in
+    | ns :: args -> let form = main_form
+                                 ns (Sys.getcwd ()) (splice_args args) in
                     let messages = [eval_message form "user"] in
                     eval port messages handle_done
 
