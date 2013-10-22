@@ -108,8 +108,13 @@ let rec find_root cwd original =
       else
         find_root (Filename.dirname cwd) original
 
+let comp f g x = f (g x)
+
+let quoted s =
+  "\"" ^ s ^ "\""
+
 let splice_args args =
-  String.concat ~sep:"\" \"" (List.map args String.escaped)
+  String.concat ~sep:" " (List.map args (comp quoted String.escaped))
 
 let main_form =
   sprintf "(do
@@ -118,7 +123,7 @@ let main_form =
                    ns (symbol (or (namespace raw) raw))
                    m-sym (if (namespace raw) (symbol (name raw)) '-main)]
                (require ns)
-               (try ((ns-resolve ns m-sym) \"%s\")
+               (try ((ns-resolve ns m-sym) %s)
                (catch Exception e
                  (let [c (:exit-code (ex-data e))]
                    (when-not (and (number? c) (zero? c))
