@@ -36,7 +36,7 @@ let () =
       | Some ["--help"] | Some ["-h"] | Some ["-?"] | Some ["help"] ->
         printf "%s\n%!" help
       | Some ["--version"] | Some ["-v"] | Some ["version"] ->
-        printf "Grenchman 0.1.0\n%!"
+        printf "Grenchman 0.2.0\n%!"
 
       | Some ("eval" :: args) ->
         Client.main (repl_port ".nrepl-port" port_err)
