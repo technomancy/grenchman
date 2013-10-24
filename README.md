@@ -21,12 +21,13 @@ Grenchman has four main commands:
 
 Running with no arguments will read code from stdin to accomodate shebangs.
 
-Each of these commands connects to a running nREPL server in order to
-avoid JVM startup time. The simplest way to start a project nREPL
-server is to run `lein trampoline repl :headless` from the project
-directory in another shell. All `grench` invocations from inside the
-project directory will use that nREPL, but by setting the
-`GRENCH_PORT` environment variable you can connect to it from outside.
+The first three commands connects to a running nREPL project server in
+order to avoid JVM startup time. The simplest way to start a project
+nREPL server is to run `lein trampoline repl :headless` from the
+project directory in another shell. All non-lein `grench` invocations
+from inside the project directory will use that nREPL, but by setting
+the `GRENCH_PORT` environment variable you can connect to it from
+outside.
 
 ### Leiningen
 
@@ -47,6 +48,13 @@ emits an `java.io.FileNotFoundException: project.clj` error message,
 upgrading Leiningen should fix it.
 
 ## Building
+
+Building grenchman typically requires compiling the whole OCaml
+toolchain (two compilers, two standard libraries, a package manager,
+and a handful of other third-party libraries) from scratch and can
+take up to an hour. Please use the
+[precompiled binaries](http://leiningen.org/grench.html#download) if
+possible.
 
 You will need to
 [install opam](http://opam.ocamlpro.com/doc/Quick_Install.html) and

@@ -1,6 +1,6 @@
 # History of user-visible changes in Grenchman
 
-## 0.2.0 / ???
+## 0.2.0 / 06-10-2013
 
 * Read forms from stdin when no args are given.
 * Exit with 111 to indicate connection failure.
