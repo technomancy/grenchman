@@ -68,6 +68,7 @@ If you're not sure whether you have 4.x installed or not, you can check with:
     # If your system compiler is 4.x or above, you're ready to go.
     # Otherwise, issue the following command:
     $ opam switch 4.01.0
+    # Don't forget to add ~/.opam/4.01.0/bin/ to your $PATH
 
 To build, run the following commands:
 
