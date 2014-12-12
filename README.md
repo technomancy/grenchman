@@ -57,7 +57,7 @@ take up to an hour. Please use the
 possible.
 
 You will need to
-[install opam](http://opam.ocamlpro.com/doc/Quick_Install.html) and
+[install opam](http://opam.ocaml.org/doc/Install.html) and
 OCaml 4.x to be able to build Grenchman. You'll also need `libffi` as
 well as `libreadline-dev` (sometimes called `readline-devel` on RPM
 systems).
