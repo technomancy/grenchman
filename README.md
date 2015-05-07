@@ -74,7 +74,7 @@ To build, run the following commands:
 
     $ git clone git@github.com:technomancy/grenchman.git grenchman
     $ cd grenchman
-    $ opam install ocamlfind core async ctypes
+    $ opam install ocamlfind core async ctypes ctypes-foreign
     $ ocamlbuild -use-ocamlfind -lflags -cclib,-lreadline grench.native
     $ ln -s $PWD/grench.native ~/bin/grench # or somewhere on your $PATH
 
