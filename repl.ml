@@ -28,7 +28,7 @@ let rec loop (r,w,p) resp =
     match Readline.read prompt, List.Assoc.find resp "session" with
       | Some input, Some Bencode.String(session) ->
         Nrepl.send w p (repl_message input session)
-      | Some _, _ -> Printf.eprintf "Missing session.\n"; Pervasives.exit 1
+      | Some _, _ -> Core.Std.Printf.eprintf "Missing session.\n"; Pervasives.exit 1
       | None, _ -> Pervasives.exit 0
 
 let main port =
