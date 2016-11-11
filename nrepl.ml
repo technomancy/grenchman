@@ -47,7 +47,7 @@ let send w pending (message,actions) =
   Writer.write w out;
   match List.Assoc.find message "id" with
     | Some id ->
-      Hashtbl.replace pending ~key:id ~data:actions;
+      Hashtbl.set pending ~key:id ~data:actions;
       current_msg_id := id
     | None -> Printf.eprintf "  Sending message without id!\n%!"
 

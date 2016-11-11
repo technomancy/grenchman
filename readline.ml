@@ -14,9 +14,9 @@ let read prompt =
   (* Ctypes needs help for some reason to convert char ptr to string *)
   let string_of_char_ptr charp =
     let length = strlen charp 0 in
-    let s = String.create length in
+    let s = Bytes.create length in
     for i = 0 to length - 1 do
-      s.[i] <- !@ (charp +@ i)
+      Bytes.set s i !@ (charp +@ i)
     done;
     s in
 
