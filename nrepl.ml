@@ -143,7 +143,7 @@ let rec loop (r,w,p) handler buffer partial =
   Reader.read r buffer >>= parse_response handler buffer partial
 
 let get_session buffer resp =
-  let no_session ()  = Printf.eprintf "No session!"; Pervasives.exit 0 in
+  let no_session ()  = Printf.eprintf "No session!\n"; Pervasives.exit 0 in
   match resp with
     | `Eof -> no_session ()
     | `Ok bytes_read -> match Bencode.parse (String.sub buffer 0 bytes_read) with

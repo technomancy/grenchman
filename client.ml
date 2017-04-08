@@ -24,7 +24,7 @@ let send_input resp (r,w,p) result =
         | Some input -> Nrepl.send w p (Nrepl.stdin_message input session)
         (* TODO: only exit on EOF in a top-level input request *)
         | None -> Nrepl.debug "Eof seen"; exit 0)
-    | None -> eprintf "  No session in need-input."
+    | None -> eprintf "  No session in need-input.\n"
 
 let handle_done (r,w,p) resp =
   if Nrepl.pending_ids p = ["init"] then
