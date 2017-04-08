@@ -96,7 +96,7 @@ let main_form =
                (require ns)
                (try ((ns-resolve ns m-sym) \"%s\")
                (catch Exception e
-                 (let [c (:exit-code (ex-data e))]
+                 (let [c (:exit-code (ex-data e) 1)]
                    (when-not (and (number? c) (zero? c))
                      (print-cause-trace e))
                    c)))))"
