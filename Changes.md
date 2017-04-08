@@ -1,5 +1,11 @@
 # History of user-visible changes in Grenchman
 
+## 0.3.0 / ???
+
+* Support multi-line input in repl.
+* Add `load` command.
+* Fix exit code when errors occur.
+
 ## 0.2.0 / 06-10-2013
 
 * Read forms from stdin when no args are given.
