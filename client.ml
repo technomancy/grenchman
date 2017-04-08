@@ -84,13 +84,11 @@ let rec find_root cwd original =
       else
         find_root (Filename.dirname cwd) original
 
-let comp f g x = f (g x)
-
 let quoted s =
-  "\"" ^ s ^ "\""
+  "\"" ^ (String.escaped s) ^ "\""
 
 let splice_args args =
-  String.concat ~sep:" " (List.map args (comp quoted String.escaped))
+  String.concat ~sep:" " (List.map args quoted)
 
 let main_form =
   sprintf "(do
