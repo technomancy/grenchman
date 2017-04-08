@@ -2,6 +2,8 @@
 
 ## 0.3.0 / ???
 
+* Set "grench.cwd" system property to current directory.
+* Fix quoting bugs in main command.
 * Support multi-line input in repl.
 * Add `load` command.
 * Fix exit code when errors occur.
