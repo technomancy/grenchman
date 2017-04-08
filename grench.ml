@@ -10,12 +10,18 @@ Commands:
   eval FORM                             Evals given form.
   main NAMESPACE[/FUNCTION] [ARGS...]   Runs existing defn.
   repl [:connect PORT]                  Connects a repl.
+  load FILE                             Loads a given file.
   lein [TASK ARGS...]                   Runs a Leiningen task.
 
-Running with no arguments will read code from stdin.
+Running with no arguments will read code to eval from stdin.
 
-When running from a Leiningen project directory, the port can usually be
-inferred. Otherwise set the GRENCH_PORT environment variable.
+The first four commands connect to a running nREPL project server in order to
+avoid JVM startup time. The simplest way to start a project nREPL server is to
+run `lein trampoline repl :headless` from the project directory in another
+shell. If it can't infer the port correctly you can set $GRENCH_PORT.
+
+The lein command requires a separate Leiningen-specific nREPL process to be
+running; you can launch one with this: cd ~/.lein && lein repl :headless
 "
 
 let port_err = "Couldn't read port from .nrepl-port or $GRENCH_PORT.\n"
@@ -36,11 +42,15 @@ let () =
       | Some ["--help"] | Some ["-h"] | Some ["-?"] | Some ["help"] ->
         printf "%s\n%!" help
       | Some ["--version"] | Some ["-v"] | Some ["version"] ->
-        printf "Grenchman 0.2.0\n%!"
+        printf "Grenchman 0.3.0\n%!"
 
       | Some ("eval" :: args) ->
         Client.main (repl_port ".nrepl-port" port_err)
           ("clojure.main/main" :: "-e" :: args)
+
+      | Some ("load" :: args) ->
+        Client.main (repl_port ".nrepl-port" port_err)
+          ("clojure.main/main" :: args)
 
       | Some ("main" :: args) ->
         Client.main (repl_port ".nrepl-port" port_err) args

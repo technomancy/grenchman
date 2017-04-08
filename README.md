@@ -6,22 +6,23 @@ Fast invocation of Clojure code over nREPL.
   <img src="comic.gif" align="right"></a>
 
 To install, download the appropriate binary from
-http://leiningen.org/grench.html and place it on your path. If
+https://leiningen.org/grench.html and place it on your path. If
 downloads for your platform are not provided you can compile your own;
 see "Building" below.
 
 ## Usage
 
-Grenchman has four main commands:
+Grenchman has five main commands:
 
 * `grench eval "(+ 12 49)"` - evals given form
 * `grench main my.main.ns/entry-point arg1 arg2` - runs existing defn
 * `grench repl` or `grench repl :connect $PORT` - connects a repl
+* `grench load path/to/file.clj` - load a file
 * `grench lein test` - runs a Leiningen task
 
 Running with no arguments will read code from stdin to accomodate shebangs.
 
-The first three commands connects to a running nREPL project server in
+The first four commands connect to a running nREPL project server in
 order to avoid JVM startup time. The simplest way to start a project
 nREPL server is to run `lein trampoline repl :headless` from the
 project directory in another shell. All non-lein `grench` invocations
@@ -53,7 +54,7 @@ Building grenchman typically requires compiling the whole OCaml
 toolchain (two compilers, two standard libraries, a package manager,
 and a handful of other third-party libraries) from scratch and can
 take up to an hour. Please use the
-[precompiled binaries](http://leiningen.org/grench.html#download) if
+[precompiled binaries](https://leiningen.org/grench.html#download) if
 possible.
 
 You will need to
@@ -67,8 +68,11 @@ If you're not sure whether you have 4.x installed or not, you can check with:
     $ opam switch list
     # If your system compiler is 4.x or above, you're ready to go.
     # Otherwise, issue the following command:
-    $ opam switch 4.01.0
-    # Don't forget to add ~/.opam/4.01.0/bin/ to your $PATH
+    $ opam switch 4.04.0
+    # Don't forget to add ~/.opam/4.04.0/bin/ to your $PATH
+
+    $ sudo apt install ocaml ocaml-native-compilers opam camlp4 aspcud \
+        libreadline-dev libffi-dev
 
 To build, run the following commands:
 
@@ -93,7 +97,7 @@ with an exit code of 111, which may be useful for scripting it.
 
 ## License
 
-Copyright © 2013 Phil Hagelberg and
+Copyright © 2013, 2017 Phil Hagelberg and
 [contributors](https://github.com/technomancy/grenchman/contributors). Bencode
 implementation by Prashanth Mundkur. Licensed under the GNU General
 Public License, version 3 or later. See COPYING for details.
