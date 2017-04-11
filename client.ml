@@ -41,7 +41,7 @@ let rec handler handle_done (r,w,p) raw resp =
     | ("value", value) -> resp_actions.Nrepl.value value
     | ("ns", new_ns) -> ns := new_ns
     | ("session", _) | ("id", _) -> ()
-    | (k, v) -> printf "  Unknown response: %s %s\n%!" k v in
+    | (k, v) -> Nrepl.debug (sprintf "  Unknown response: %s %s\n%!" k v) in
 
   let handle_status status =
     match status with
@@ -56,15 +56,15 @@ let rec handler handle_done (r,w,p) raw resp =
       | Bencode.String "need-input" ->
         ignore (send_input resp (r,w,p) (Readline.read "")); ()
       | Bencode.String "interrupted" -> print_newline ()
-      | x -> printf "  Unknown status: %s\n%!" (Bencode.marshal x) in
+      | x -> Nrepl.debug (sprintf "  Unknown status: %s\n%!" (Bencode.marshal x)) in
 
   let handle_clause clause =
     match clause with
       | k, Bencode.String v -> handle k v
       | "status", Bencode.List(status) -> List.iter status handle_status
       | k, v ->
-        eprintf "  Unknown %s response: %s %s\n%!"
-                (Bencode.string_of_type v) k raw in
+        Nrepl.debug (sprintf "  Unknown %s response: %s %s\n%!"
+                             (Bencode.string_of_type v) k raw) in
 
   List.iter resp handle_clause
 
